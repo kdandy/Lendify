@@ -91,42 +91,99 @@ javac -d bin src/com/library/enums/*.java src/com/library/exception/*.java src/c
 java -cp bin com.library.Main
 ```
 
-## Contoh Penggunaan
-Berikut adalah contoh penggunaan dasar sistem Lendify:
-```java
-// Membuat perpustakaan
-Library library = new Library("Perpustakaan Kota", "Jl. Pahlawan No. 10");
+## Penggunaan Interface Interaktif
 
-// Membuat pustakawan
-Person adminPerson = new Person("P001", "John Smith", "Jl. Merdeka No. 5", "081234567890");
-adminPerson.setEmail("john.smith@library.com");
-Librarian librarian = new Librarian(adminPerson, "L001", "Kepala Pustakawan", 50000, LibrarianPermission.ADMIN);
-library.addLibrarian(librarian);
+Setelah menjalankan program, Anda akan melihat tampilan menu utama. Berikut adalah panduan penggunaan interface interaktif:
 
-// Membuat kategori buku
-BookCategory fictionCategory = new BookCategory("Fiksi", "Buku-buku cerita fiksi");
-library.addCategory(fictionCategory);
-
-// Menambah buku
-Book novel = new Book("978-3-16-148410-0", "Laskar Pelangi", "Andrea Hirata", "Bentang Pustaka", 2005);
-library.addBook(novel);
-library.addBookToCategory(novel, fictionCategory);
-
-// Menambah item buku (salinan fisik)
-BookItem novelCopy = librarian.addBookItem(novel, "LP001");
-
-// Membuat anggota
-Person memberPerson = new Person("P002", "Ani Wijaya", "Jl. Kebon Sirih No. 3", "087654321098");
-Member member = librarian.addMember(memberPerson);
-
-// Melakukan peminjaman
-try {
-    BookLoan loan = librarian.issueBook(member, novelCopy);
-    System.out.println("Buku berhasil dipinjam sampai: " + loan.getDueDate());
-} catch (Exception e) {
-    System.out.println("Gagal meminjam buku: " + e.getMessage());
-}
+### Menu Utama
+Menu utama menampilkan berbagai opsi untuk mengelola perpustakaan:
 ```
+==== MENU UTAMA ====
+1. Kelola Pustakawan
+2. Kelola Kategori Buku
+3. Kelola Buku
+4. Kelola Anggota
+5. Kelola Peminjaman dan Pengembalian
+6. Kelola Reservasi
+7. Cari Buku
+8. Lihat Statistik Perpustakaan
+9. Jalankan Demo Mode
+0. Keluar
+```
+
+### Demo Mode
+Untuk pengguna pertama kali, pilih opsi "9. Jalankan Demo Mode" untuk mengisi database dengan data sampel. Ini akan memungkinkan Anda untuk menguji fitur-fitur tanpa perlu membuat data manual.
+
+### Kelola Pustakawan
+Menu ini memungkinkan Anda untuk:
+- Melihat daftar pustakawan
+- Menambah pustakawan baru dengan tingkat akses berbeda (BASIC, FULL, ADMIN)
+- Mengubah informasi pustakawan
+- Menghapus pustakawan
+
+### Kelola Kategori Buku
+Menu ini memungkinkan Anda untuk:
+- Melihat daftar kategori
+- Menambah kategori baru
+- Mengubah informasi kategori
+- Menghapus kategori
+
+### Kelola Buku
+Menu ini memungkinkan Anda untuk:
+- Melihat daftar buku
+- Menambah buku baru
+- Menambah salinan buku (BookItem)
+- Mengubah informasi buku
+- Melihat detail buku termasuk salinan yang tersedia
+- Menghapus buku
+
+### Kelola Anggota
+Menu ini memungkinkan Anda untuk:
+- Melihat daftar anggota
+- Menambah anggota baru (mahasiswa atau reguler)
+- Mengubah informasi anggota
+- Melihat detail anggota termasuk peminjaman aktif
+- Memperpanjang keanggotaan
+- Mengaktifkan/menonaktifkan anggota
+
+### Kelola Peminjaman dan Pengembalian
+Menu ini memungkinkan Anda untuk:
+- Pinjamkan buku kepada anggota
+- Kembalikan buku
+- Lihat daftar peminjaman aktif
+- Lihat riwayat peminjaman
+- Perpanjang masa peminjaman
+
+### Kelola Reservasi
+Menu ini memungkinkan Anda untuk:
+- Membuat reservasi buku yang sedang dipinjam
+- Melihat daftar reservasi
+- Memproses reservasi ketika buku tersedia
+- Membatalkan reservasi
+
+### Cari Buku
+Menu ini memungkinkan Anda untuk mencari buku berdasarkan:
+- Judul
+- Pengarang
+- Kategori
+
+### Statistik Perpustakaan
+Menampilkan berbagai statistik perpustakaan seperti:
+- Jumlah buku
+- Jumlah anggota
+- Jumlah peminjaman aktif
+- Jumlah denda yang terkumpul
+
+## Contoh Penggunaan
+Berikut adalah contoh alur penggunaan dasar sistem Lendify:
+
+1. Jalankan program dan pilih mode demo (opsi 9) untuk mengisi database dengan data sampel.
+2. Tambahkan kategori buku menggunakan menu "Kelola Kategori Buku".
+3. Tambahkan buku dan salinannya menggunakan menu "Kelola Buku".
+4. Tambahkan anggota menggunakan menu "Kelola Anggota".
+5. Pinjamkan buku kepada anggota melalui menu "Kelola Peminjaman dan Pengembalian".
+6. Kembalikan buku yang dipinjam dan proses denda jika ada.
+7. Buat reservasi untuk buku yang sedang dipinjam menggunakan menu "Kelola Reservasi".
 
 ## Exception Handling
 Sistem ini menggunakan beberapa class exception khusus yang masing-masing menangani kesalahan spesifik:
