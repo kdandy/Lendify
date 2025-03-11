@@ -72,7 +72,7 @@ src/
 ## Cara Menjalankan Aplikasi
 1. Clone repositori:
 ```bash
-git clone https://github.com/username/lendify.git
+git clone https://github.com/kdandy/lendify.git
 cd lendify
 ```
 
