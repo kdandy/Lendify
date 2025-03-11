@@ -21,9 +21,9 @@ public class Main {
     private static Map<String, Reservation> reservations = new HashMap<>();
     
     public static void main(String[] args) {
-        System.out.println("============================================");
+        System.out.println("==================================================");
         System.out.println("    SISTEM MANAJEMEN PERPUSTAKAAN - LENDIFY");
-        System.out.println("============================================");
+        System.out.println("==================================================");
         
         initializeLibrary();
         
