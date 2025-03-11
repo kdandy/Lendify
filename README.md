@@ -388,11 +388,11 @@ Penjelasan: Member dapat membuat reservasi untuk buku yang sedang dipinjam. Memb
 
 ## Author
 ### Kelompok 2 Kelas B Pemrograman Berorientasi Objek(PBO) - Lendify (Sistem Peminjaman Buku di Perpustakaan)
-- Nama    : Dandy Faishal Fahmi     - 24060123140136
-- Nama    : Fauzan Hadi             - 24060123140176
-- Nama    : Gaza Al-ghazali Chansa  - 24060123140183
-- Nama    : Diva Arvis Permata      - 24060123130102
-- Nama    : Ganen                   - 24060123140148
+- Nama    : Dandy Faishal Fahmi         - 24060123140136
+- Nama    : Fauzan Hadi                 - 24060123140176
+- Nama    : Gaza Al-ghazali Chansa      - 24060123140183
+- Nama    : Diva Arvis Permata          - 24060123130102
+- Nama    : Ganendra Dzahwan Yulianto   - 24060123140148
 
 
 ## Kontribusi
