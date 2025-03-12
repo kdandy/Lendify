@@ -83,7 +83,7 @@ mkdir -p bin
 
 3. Kompilasi semua file Java:
 ```bash
-javac -d bin src/com/library/enums/*.java src/com/library/exception/*.java src/com/library/model/*.java src/com/library/Main.java
+javac -d bin src/com/library/enums/*.java src/com/library/exception/*.java src/com/library/model/*.java src/com/library/gui/*.java src/com/library/Main.java
 ```
 
 4. Jalankan program:

@@ -130,14 +130,23 @@ public class Librarian extends Person {
         }
         
         Member member = bookLoan.getMember();
+        BookItem returnedItem = bookLoan.getBookItem();
         member.returnBook(bookLoan);
         
         // cek apakah ada reservasi yang menunggu
-        Book book = bookLoan.getBookItem().getBook();
+        Book book = returnedItem.getBook();
         for (Reservation reservation : book.getReservations()) {
             if (reservation.getStatus() == ReservationStatus.PENDING) {
-                reservation.setStatus(ReservationStatus.FULFILLED);
-                break;
+                try {
+                    // Coba pinjamkan buku ke anggota yang melakukan reservasi
+                    BookLoan newLoan = issueBook(reservation.getMember(), returnedItem);
+                    reservation.setStatus(ReservationStatus.FULFILLED);
+                    System.out.println("Processed pending reservation for: " + reservation.getMember().getName());
+                    System.out.println("Book issued with loan ID: " + newLoan.getLoanId());
+                    break; // Hanya proses satu reservasi (yang paling lama menunggu)
+                } catch (Exception e) {
+                    System.out.println("Failed to process reservation for " + reservation.getMember().getName() + ": " + e.getMessage());
+                }
             }
         }
     }
@@ -179,17 +188,28 @@ public class Librarian extends Person {
         
         Book book = reservation.getBook();
         // cek apakah ada buku yang tersedia
+        if (book.getAvailableItems().isEmpty()) {
+            // Tidak ada buku tersedia, tetap dalam status PENDING
+            System.out.println("No copies available. Reservation remains in PENDING status.");
+            System.out.println("The reservation will be processed when a copy becomes available.");
+            return; // Keluar dari metode tanpa mengubah status
+        }
+        
+        // Ada buku tersedia, coba pinjamkan
         for (BookItem bookItem : book.getAvailableItems()) {
             try {
-                issueBook(reservation.getMember(), bookItem);
+                BookLoan loan = issueBook(reservation.getMember(), bookItem);
                 reservation.setStatus(ReservationStatus.FULFILLED);
+                System.out.println("Book successfully issued. Loan ID: " + loan.getLoanId());
                 return;
             } catch (Exception e) {
+                // Coba salinan berikutnya jika ada
                 continue;
             }
         }
         
-        throw new InvalidOperationException("No copies of the book are available for the reservation.");
+        // Jika sampai di sini, berarti ada masalah dengan peminjaman
+        throw new InvalidOperationException("Failed to issue book for the reservation.");
     }
     
     @Override
