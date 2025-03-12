@@ -21,11 +21,10 @@ public class Main {
     private static Map<String, BookLoan> loans = new HashMap<>();
     private static Map<String, Reservation> reservations = new HashMap<>();
     
-    // password untuk akses sistem
+    // akses sistem
     private static final String SYSTEM_PASSWORD = "lendify";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
-    // password untuk akses sistem
-    
+    // akses sistem    
     public static void main(String[] args) {
         System.out.println("=============================================");
         System.out.println("  SISTEM MANAJEMEN PERPUSTAKAAN - LENDIFY");
@@ -97,7 +96,7 @@ public class Main {
     }
     
     /**
-     * Sistem login dengan password
+     * Sistem login
      * @return true jika login berhasil, false jika gagal setelah beberapa percobaan
      */
     private static boolean login() {
