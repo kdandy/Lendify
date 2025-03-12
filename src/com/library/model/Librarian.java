@@ -17,7 +17,7 @@ public class Librarian extends Person {
     private double salary;
     private LibrarianPermission permission;
     
-    // Constructors
+    // konsruktor
     public Librarian() {
         this.joiningDate = new Date();
         this.permission = LibrarianPermission.BASIC;
@@ -42,7 +42,7 @@ public class Librarian extends Person {
         this.joiningDate = new Date();
     }
     
-    // Getters and Setters
+    // getter dan setter
     public String getStaffId() {
         return staffId;
     }
@@ -79,7 +79,7 @@ public class Librarian extends Person {
         this.permission = permission;
     }
     
-    // Methods
+    // metode
     public BookItem addBookItem(Book book, String barcode) throws InvalidOperationException {
         if (permission == LibrarianPermission.BASIC) {
             throw new InvalidOperationException("You do not have permission to add book items. Required: FULL or ADMIN.");
@@ -132,7 +132,7 @@ public class Librarian extends Person {
         Member member = bookLoan.getMember();
         member.returnBook(bookLoan);
         
-        // Check if there are any reservations for this book
+        // cek apakah ada reservasi yang menunggu
         Book book = bookLoan.getBookItem().getBook();
         for (Reservation reservation : book.getReservations()) {
             if (reservation.getStatus() == ReservationStatus.PENDING) {
@@ -178,14 +178,13 @@ public class Librarian extends Person {
         }
         
         Book book = reservation.getBook();
-        // Check if any copy of the book is available
+        // cek apakah ada buku yang tersedia
         for (BookItem bookItem : book.getAvailableItems()) {
             try {
                 issueBook(reservation.getMember(), bookItem);
                 reservation.setStatus(ReservationStatus.FULFILLED);
                 return;
             } catch (Exception e) {
-                // Try the next available copy
                 continue;
             }
         }

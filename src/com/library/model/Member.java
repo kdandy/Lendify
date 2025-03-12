@@ -20,7 +20,7 @@ public class Member extends Person {
     private List<Reservation> reservations;
     private double totalFinesPaid;
     
-    // Constructors
+    // konstruktor
     public Member() {
         this.bookLoans = new ArrayList<>();
         this.reservations = new ArrayList<>();
@@ -41,14 +41,14 @@ public class Member extends Person {
         this.status = MemberStatus.ACTIVE;
         this.totalFinesPaid = 0.0;
         
-        // Set expiry date to 1 year from now
+        // seting expiry date
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(this.registrationDate);
         calendar.add(Calendar.YEAR, 1);
         this.expiryDate = calendar.getTime();
     }
     
-    // Getters and Setters
+    // getter dan setter
     public String getMemberId() {
         return memberId;
     }
@@ -96,7 +96,7 @@ public class Member extends Person {
         return totalFinesPaid;
     }
     
-    // Methods
+    // metode
     public double calculateFine(BookItem book) {
         double totalFine = 0.0;
         for (BookLoan loan : bookLoans) {
@@ -135,7 +135,6 @@ public class Member extends Person {
         loan.setStatus(LoanStatus.COMPLETED);
         loan.getBookItem().checkin();
         
-        // Calculate and set fine if any
         double fine = loan.calculateFine();
         loan.setFine(fine);
     }
@@ -146,12 +145,12 @@ public class Member extends Person {
     
     public void renewMembership(int months) {
         if (expiryDate.before(new Date())) {
-            // If membership has expired, set the new expiry date from today
+            // jika membership sudah expired, extend dari tanggal sekarang
             Calendar calendar = Calendar.getInstance();
             calendar.add(Calendar.MONTH, months);
             expiryDate = calendar.getTime();
         } else {
-            // If membership hasn't expired, extend from the current expiry date
+            // jika membership masih aktif, extend dari expiry date
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(expiryDate);
             calendar.add(Calendar.MONTH, months);
@@ -177,11 +176,11 @@ public class Member extends Person {
     }
     
     public int getMaxBooks() {
-        return 5; // Default value, to be overridden by subclasses
+        return 5;
     }
     
     public int getMaxLoanDays() {
-        return 14; // Default value, to be overridden by subclasses
+        return 14;
     }
     
     public int getCurrentBooksCount() {

@@ -13,7 +13,7 @@ public class Reservation {
     private Date reservationDate;
     private ReservationStatus status;
     
-    // Constructor
+    // konsruktor
     public Reservation(Member member, Book book) {
         this.reservationId = "R" + UUID.randomUUID().toString().substring(0, 8);
         this.member = member;
@@ -21,11 +21,11 @@ public class Reservation {
         this.reservationDate = new Date();
         this.status = ReservationStatus.PENDING;
         
-        // Add this reservation to the book's reservation list
+        // tambahkan reservasi ke buku
         book.addReservation(this);
     }
     
-    // Getters and Setters
+    // getter dan setter
     public String getReservationId() {
         return reservationId;
     }
@@ -50,7 +50,7 @@ public class Reservation {
         this.status = status;
     }
     
-    // Methods
+    // metode
     public void cancelReservation() {
         this.status = ReservationStatus.CANCELLED;
         this.book.removeReservation(this);

@@ -9,14 +9,14 @@ public class BookCategory {
     private String description;
     private List<Book> books;
     
-    // Constructor
+    // konstruktor
     public BookCategory(String name, String description) {
         this.name = name;
         this.description = description;
         this.books = new ArrayList<>();
     }
     
-    // Getters and Setters
+    // getters and setters
     public String getName() {
         return name;
     }

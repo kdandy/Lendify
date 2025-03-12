@@ -18,17 +18,16 @@ public class BookLoan {
     private double finePaid;
     private LoanStatus status;
     
-    // Constants
+    // kostant
     private static final double FINE_PER_DAY = 1.0; // $1 per day
     
-    // Constructor
+    // konstruktor
     public BookLoan(Member member, BookItem bookItem) {
         this.loanId = "L" + UUID.randomUUID().toString().substring(0, 8);
         this.member = member;
         this.bookItem = bookItem;
         this.issueDate = new Date();
         
-        // Calculate due date based on member type
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(this.issueDate);
         calendar.add(Calendar.DAY_OF_MONTH, member.getMaxLoanDays());
@@ -39,7 +38,7 @@ public class BookLoan {
         this.status = LoanStatus.ACTIVE;
     }
     
-    // Getters and Setters
+    // getters and setters
     public String getLoanId() {
         return loanId;
     }
@@ -111,10 +110,10 @@ public class BookLoan {
         Date currentDate = new Date();
         
         if (returnDate != null) {
-            // Book has been returned
+            // buku sudah dikembalikan
             daysLate = (returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24);
         } else {
-            // Book has not been returned yet
+            // buku belum dikembalikan
             daysLate = (currentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24);
         }
         
@@ -122,18 +121,18 @@ public class BookLoan {
     }
     
     public boolean extendDueDate(int days) {
-        // Check if the book is already overdue
+        // cek apakah buku sudah lewat tanggal jatuh tempo
         if (isOverdue()) {
             return false;
         }
         
-        // Check if the book has any reservations
+        // cek apakah buku memiliki reservasi yang tertunda
         Book book = bookItem.getBook();
         if (!book.getPendingReservations().isEmpty()) {
             return false;
         }
         
-        // Extend the due date
+        // perpanjang tanggal jatuh tempo
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(this.dueDate);
         calendar.add(Calendar.DAY_OF_MONTH, days);

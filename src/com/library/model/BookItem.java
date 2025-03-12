@@ -16,7 +16,7 @@ public class BookItem {
     private String location;
     private boolean isActive;
     
-    // Constructor
+    // konstruktor
     public BookItem(Book book, String barcode) {
         this.book = book;
         this.barcode = barcode;
@@ -27,7 +27,7 @@ public class BookItem {
         this.isActive = true;
     }
     
-    // Getters and Setters
+    // getters and setters
     public String getBarcode() {
         return barcode;
     }
@@ -90,7 +90,7 @@ public class BookItem {
         isActive = active;
     }
     
-    // Methods
+    // metode
     public void checkout() {
         setAvailable(false);
         setStatus(BookStatus.LOANED);

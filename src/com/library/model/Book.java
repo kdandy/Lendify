@@ -21,7 +21,7 @@ public class Book {
     private Language language;
     private List<Reservation> reservations;
     
-    // Constructors
+    // konsruktor
     public Book() {
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
@@ -52,7 +52,7 @@ public class Book {
         this.reservations = new ArrayList<>();
     }
     
-    // Getters and Setters
+    // getters and setters
     public String getISBN() {
         return isbn;
     }
@@ -133,7 +133,7 @@ public class Book {
         return reservations;
     }
     
-    // Methods
+    // metode
     public void addBookItem(BookItem item) {
         items.add(item);
     }

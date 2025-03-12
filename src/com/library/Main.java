@@ -11,7 +11,7 @@ public class Main {
     private static Scanner scanner = new Scanner(System.in);
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
     
-    // Objek global
+    // objek global
     private static Library library;
     private static Librarian currentLibrarian;
     private static List<Member> members = new ArrayList<>();
@@ -21,30 +21,29 @@ public class Main {
     private static Map<String, BookLoan> loans = new HashMap<>();
     private static Map<String, Reservation> reservations = new HashMap<>();
     
-    // Password untuk akses sistem
+    // password untuk akses sistem
     private static final String SYSTEM_PASSWORD = "lendify";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
-    // Password untuk akses sistem
+    // password untuk akses sistem
     
     public static void main(String[] args) {
         System.out.println("=============================================");
         System.out.println("  SISTEM MANAJEMEN PERPUSTAKAAN - LENDIFY");
         System.out.println("=============================================");
         
-        // Sistem login
+        // sistem login
         if (!login()) {
             System.out.println("Terlalu banyak percobaan gagal. Program berakhir.");
             System.exit(0);
         }
         
-        // Animasi loading sederhana
+        // animasi loading sederhana
         System.out.print("Memuat sistem");
         for (int i = 0; i < 5; i++) {
             try {
                 TimeUnit.MILLISECONDS.sleep(500);
                 System.out.print(".");
             } catch (InterruptedException e) {
-                // Ignore
             }
         }
         System.out.println("\nSistem siap digunakan!");
@@ -144,7 +143,7 @@ public class Main {
     }
     
     private static void initializeLibrary() {
-        // Membuat perpustakaan
+        // membuat perpustakaan
         System.out.print("Masukkan nama perpustakaan: ");
         String name = scanner.nextLine();
         System.out.print("Masukkan alamat perpustakaan: ");
@@ -153,7 +152,7 @@ public class Main {
         library = new Library(name, address);
         System.out.println("Perpustakaan berhasil dibuat: " + library.getName());
         
-        // Membuat pustakawan admin default
+        // membuat pustakawan admin default
         try {
             Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "123456789");
             adminPerson.setEmail("admin@perpustakaan.com");
@@ -403,7 +402,7 @@ public class Main {
         
         Librarian librarian = librarians.get(index - 1);
         
-        // Mencegah penghapusan diri sendiri
+        // mencegah penghapusan diri sendiri
         if (librarian.equals(currentLibrarian)) {
             System.out.println("Anda tidak dapat menghapus akun pustakawan yang sedang digunakan.");
             return;
@@ -735,7 +734,7 @@ public class Main {
             
             System.out.println("Buku berhasil ditambahkan: " + book.getTitle());
             
-            // Tambahkan buku ke kategori
+            // tambahkan buku ke kategori
             System.out.print("Apakah Anda ingin menambahkan buku ini ke kategori? (y/n): ");
             String addToCategory = scanner.nextLine().trim().toLowerCase();
             
@@ -984,7 +983,7 @@ public class Main {
         System.out.println("Format: " + book.getFormat());
         System.out.println("Bahasa: " + book.getLanguage());
         
-        // Tampilkan salinan buku
+        // tampilkan salinan buku
         List<BookItem> items = book.getItems();
         if (items.isEmpty()) {
             System.out.println("\nBuku ini belum memiliki salinan.");
@@ -1133,7 +1132,7 @@ public class Main {
             int typeChoice = getIntInput("Pilih jenis anggota: ");
             
             if (typeChoice == 1) {
-                // Mahasiswa
+                // mahasiswa
                 System.out.print("ID Mahasiswa: ");
                 String studentId = scanner.nextLine();
                 System.out.print("Fakultas: ");
@@ -1148,7 +1147,7 @@ public class Main {
                 
                 System.out.println("Anggota mahasiswa berhasil ditambahkan: " + studentMember.getName());
             } else {
-                // Reguler
+                // reguler
                 System.out.print("Pekerjaan: ");
                 String occupation = scanner.nextLine();
                 System.out.print("Nama Perusahaan/Institusi: ");
@@ -1326,7 +1325,7 @@ public class Main {
         System.out.println("Buku yang Sedang Dipinjam: " + member.getCurrentBooksCount());
         System.out.println("Total Denda yang Dibayar: Rp" + String.format("%.2f", member.getTotalFinesPaid()));
         
-        // Tampilkan peminjaman aktif
+        // tampilkan peminjaman aktif
         List<BookLoan> activeLoans = new ArrayList<>();
         for (BookLoan loan : member.getBookLoans()) {
             if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.OVERDUE) {
@@ -1349,7 +1348,7 @@ public class Main {
             }
         }
         
-        // Tampilkan reservasi aktif
+        // tampilkan reservasi aktif
         List<Reservation> activeReservations = new ArrayList<>();
         for (Reservation reservation : member.getReservations()) {
             if (reservation.getStatus() == ReservationStatus.PENDING) {
@@ -1510,7 +1509,7 @@ public class Main {
     }
     
     private static void issueBook() {
-        // Pilih anggota
+        // milih anggota
         displayMembers();
         
         if (members.isEmpty()) {
@@ -1526,7 +1525,7 @@ public class Main {
         
         Member member = members.get(memberIndex - 1);
         
-        // Pilih buku
+        // milih buku
         displayBooks();
         
         List<Book> bookList = library.getCollection().getBooks();
@@ -1543,7 +1542,7 @@ public class Main {
         
         Book book = bookList.get(bookIndex - 1);
         
-        // Pilih salinan buku
+        // milih salinan buku
         List<BookItem> availableItems = book.getAvailableItems();
         if (availableItems.isEmpty()) {
             System.out.println("Tidak ada salinan buku yang tersedia untuk dipinjam.");
@@ -1582,7 +1581,7 @@ public class Main {
     }
     
     private static void returnBook() {
-        // Tampilkan daftar peminjaman aktif
+        // tampilkan daftar peminjaman aktif
         viewActiveLoans();
         
         if (loans.isEmpty()) {
@@ -1632,12 +1631,12 @@ public class Main {
     private static void viewActiveLoans() {
         List<BookLoan> activeLoans = new ArrayList<>();
         
-        // Kumpulkan semua peminjaman aktif dari semua anggota
+        // kumpulkan semua peminjaman aktif dari semua anggota
         for (Member member : members) {
             for (BookLoan loan : member.getBookLoans()) {
                 if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.OVERDUE) {
                     activeLoans.add(loan);
-                    loans.put(loan.getLoanId(), loan); // Pastikan ada di map loans
+                    loans.put(loan.getLoanId(), loan); // pastikan ada di map loans
                 }
             }
         }
@@ -1662,7 +1661,7 @@ public class Main {
     private static void viewLoanHistory() {
         List<BookLoan> allLoans = new ArrayList<>();
         
-        // Kumpulkan semua peminjaman dari semua anggota
+        // kumpulkan semua peminjaman dari semua anggota
         for (Member member : members) {
             allLoans.addAll(member.getBookLoans());
         }
@@ -1690,7 +1689,7 @@ public class Main {
     }
     
     private static void extendLoan() {
-        // Tampilkan daftar peminjaman aktif
+        // tampilkan daftar peminjaman aktif
         viewActiveLoans();
         
         if (loans.isEmpty()) {
@@ -1893,7 +1892,7 @@ public class Main {
     }
     
     private static void cancelReservation() {
-        // Tampilkan daftar reservasi pending
+        // tampilkan daftar reservasi pending
         List<Reservation> pendingReservations = new ArrayList<>();
         
         for (Reservation reservation : reservations.values()) {
@@ -2138,87 +2137,87 @@ public class Main {
             categories.put(artCategory.getName(), artCategory);
             categories.put(travelCategory.getName(), travelCategory);
             
-            // Buat buku
-            // Buku Fiksi
+            // buat buku
+            // buku Fiksi
             Book book1 = new Book("978-1234567897", "Petualangan Hebat", "Alice Penulis", "Buku Inc.", 2022,
-                                 "Sebuah cerita petualangan yang menarik", 320, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Sebuah cerita petualangan yang menarik", 320, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book2 = new Book("978-2345678901", "Misteri Pulau Jawa", "Budi Sastro", "Gramedia", 2020,
-                                 "Kisah misteri yang terjadi di Pulau Jawa", 275, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Kisah misteri yang terjadi di Pulau Jawa", 275, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book3 = new Book("978-3456789012", "Cinta di Kala Senja", "Citra Dewi", "Mizan", 2021,
-                                 "Roman percintaan dengan latar belakang Indonesia", 310, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Roman percintaan dengan latar belakang Indonesia", 310, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book4 = new Book("978-4567890123", "Detektif Cilik", "Doni Kusuma", "Erlangga", 2019,
-                                 "Kisah anak-anak yang memecahkan misteri kriminal", 220, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Kisah anak-anak yang memecahkan misteri kriminal", 220, BookFormat.PAPERBACK, Language.INDONESIAN);
             
-            // Buku Non-Fiksi & Sains
+            // buku Non-Fiksi & Sains
             Book book5 = new Book("978-9876543210", "Sejarah Sains", "Bob Sejarawan", "Penerbit Akademik", 2021,
-                                 "Sejarah komprehensif tentang penemuan ilmiah", 450, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Sejarah komprehensif tentang penemuan ilmiah", 450, BookFormat.HARDCOVER, Language.INDONESIAN);
             
             Book book6 = new Book("978-8765432109", "Fisika Dasar", "Eko Fisikawan", "UI Press", 2018,
-                                 "Pengantar konsep dasar fisika", 400, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Pengantar konsep dasar fisika", 400, BookFormat.HARDCOVER, Language.INDONESIAN);
             
             Book book7 = new Book("978-7654321098", "Tubuh Manusia", "Fany Dokter", "FK Press", 2022,
-                                 "Eksplorasi anatomi tubuh manusia", 380, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Eksplorasi anatomi tubuh manusia", 380, BookFormat.HARDCOVER, Language.INDONESIAN);
             
-            // Buku Teknologi
+            // buku Teknologi
             Book book8 = new Book("978-5678901234", "Dasar-dasar Pemrograman", "Charlie Koder", "Buku Teknologi", 2023,
-                                 "Pengantar konsep pemrograman", 280, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Pengantar konsep pemrograman", 280, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book9 = new Book("978-6789012345", "Jaringan Komputer", "Gani Network", "InfoKomputer", 2020,
-                                 "Panduan memahami jaringan komputer", 340, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Panduan memahami jaringan komputer", 340, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book10 = new Book("978-7890123456", "Kecerdasan Buatan", "Hana AI", "Informatika", 2023,
-                                  "Pengenalan machine learning dan AI", 420, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Pengenalan machine learning dan AI", 420, BookFormat.PAPERBACK, Language.INDONESIAN);
             
-            // Buku Sejarah
+            // buku Sejarah
             Book book11 = new Book("978-8901234567", "Sejarah Indonesia", "Indra Historian", "Balai Pustaka", 2021,
-                                  "Perjalanan sejarah Indonesia dari masa ke masa", 520, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Perjalanan sejarah Indonesia dari masa ke masa", 520, BookFormat.HARDCOVER, Language.INDONESIAN);
             
             Book book12 = new Book("978-9012345678", "Perang Dunia II", "Joko Military", "Kompas", 2019,
-                                  "Analisis komprehensif Perang Dunia II", 480, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Analisis komprehensif Perang Dunia II", 480, BookFormat.HARDCOVER, Language.INDONESIAN);
             
-            // Buku Filosofi
+            // buku Filosofi
             Book book13 = new Book("978-0123456789", "Filsafat Hidup", "Kartini Filosof", "Bentang Pustaka", 2020,
-                                  "Pandangan filosofis tentang kehidupan", 290, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Pandangan filosofis tentang kehidupan", 290, BookFormat.PAPERBACK, Language.INDONESIAN);
             
-            // Buku Biografi
+            // buku Biografi
             Book book14 = new Book("978-1234509876", "Biografi Soekarno", "Lina Biographer", "Gramedia", 2018,
-                                  "Kisah hidup sang proklamator", 500, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Kisah hidup sang proklamator", 500, BookFormat.HARDCOVER, Language.INDONESIAN);
             
-            // Buku Memasak
+            // buku Memasak
             Book book15 = new Book("978-2345609876", "Masakan Nusantara", "Mira Chef", "Koki Media", 2022,
-                                  "Kumpulan resep masakan dari seluruh Indonesia", 350, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Kumpulan resep masakan dari seluruh Indonesia", 350, BookFormat.PAPERBACK, Language.INDONESIAN);
             
-            // Buku Seni
+            // buku Seni
             Book book16 = new Book("978-3456709876", "Seni Lukis Modern", "Nina Artist", "Galeri Buku", 2020,
-                                  "Perkembangan seni lukis dari era modern", 320, BookFormat.HARDCOVER, Language.INDONESIAN);
+                                    "Perkembangan seni lukis dari era modern", 320, BookFormat.HARDCOVER, Language.INDONESIAN);
             
-            // Buku Perjalanan
+            // buku Perjalanan
             Book book17 = new Book("978-4567809876", "Jelajah Indonesia Timur", "Oki Traveler", "Travel Books", 2021,
-                                  "Panduan perjalanan ke Indonesia bagian timur", 310, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Panduan perjalanan ke Indonesia bagian timur", 310, BookFormat.PAPERBACK, Language.INDONESIAN);
             
             Book book18 = new Book("978-5678909876", "Backpacking Eropa", "Putra Wanderer", "Compass", 2019,
-                                  "Tips berhemat saat traveling ke Eropa", 260, BookFormat.PAPERBACK, Language.INDONESIAN);
+                                    "Tips berhemat saat traveling ke Eropa", 260, BookFormat.PAPERBACK, Language.INDONESIAN);
             
-            // Buku Bahasa Asing
+            // buku Bahasa Asing
             Book book19 = new Book("978-6789009876", "Professional Software Development", "Quin Coder", "O'Reilly", 2021,
-                                  "Best practices in software engineering", 400, BookFormat.PAPERBACK, Language.ENGLISH);
+                                    "Best practices in software engineering", 400, BookFormat.PAPERBACK, Language.ENGLISH);
             
             Book book20 = new Book("978-7890109876", "L'art de la Cuisine", "Remy Chef", "Français Livres", 2020,
-                                  "The art of French cooking", 320, BookFormat.HARDCOVER, Language.FRENCH);
+                                    "The art of French cooking", 320, BookFormat.HARDCOVER, Language.FRENCH);
             
-            // Tambahkan semua buku ke perpustakaan
+            // tambahkan semua buku ke perpustakaan
             List<Book> allBooks = List.of(book1, book2, book3, book4, book5, book6, book7, book8, book9, book10,
-                                         book11, book12, book13, book14, book15, book16, book17, book18, book19, book20);
+                                        book11, book12, book13, book14, book15, book16, book17, book18, book19, book20);
             
             for (Book book : allBooks) {
                 library.addBook(book);
                 books.put(book.getISBN(), book);
             }
             
-            // Kategorikan buku
+            // kategorikan buku
             library.addBookToCategory(book1, fictionCategory);
             library.addBookToCategory(book2, fictionCategory);
             library.addBookToCategory(book3, fictionCategory);
@@ -2260,14 +2259,14 @@ public class Main {
             library.addBookToCategory(book19, technologyCategory);
             library.addBookToCategory(book20, cookingCategory);
             
-            // Tambahkan salinan buku (minimal 2 salinan per buku)
+            // tambahkan salinan buku (minimal 2 salinan per buku)
             Map<Book, List<BookItem>> bookCopies = new HashMap<>();
             
             for (Book book : allBooks) {
                 List<BookItem> copies = new ArrayList<>();
                 String isbnShort = book.getISBN().substring(4, 9);
                 
-                // Buat 2-4 salinan per buku
+                // buat 2-4 salinan per buku
                 int numCopies = 2 + (int)(Math.random() * 3); // 2 sampai 4 salinan
                 
                 for (int i = 1; i <= numCopies; i++) {
@@ -2276,12 +2275,12 @@ public class Main {
                     copies.add(copy);
                     bookItems.put(barcode, copy);
                     
-                    // Beberapa buku (10%) ditandai sebagai referensi saja
+                    // beberapa buku (10%) ditandai sebagai referensi saja
                     if (i == numCopies && Math.random() < 0.1) {
                         copy.setReferenceOnly(true);
                     }
                     
-                    // Tetapkan lokasi dan harga
+                    // tetapkan lokasi dan harga
                     copy.setLocation("Rak " + (char)('A' + Math.random() * 6) + "-" + (int)(Math.random() * 100 + 1));
                     copy.setPrice(50000 + Math.random() * 150000);
                 }
@@ -2289,11 +2288,11 @@ public class Main {
                 bookCopies.put(book, copies);
             }
             
-            // Buat anggota
+            // buat anggota
             List<Person> personList = new ArrayList<>();
             List<Member> memberList = new ArrayList<>();
             
-            // Anggota reguler
+            // anggota reguler
             Person person1 = new Person("P001", "Dandy Faishal Fahmi", "Jl. Timoho Timur 1A", "082125555645");
             person1.setEmail("hello@dandy.my.id");
             personList.add(person1);
@@ -2314,7 +2313,7 @@ public class Main {
             person5.setEmail("eko.prasetyo@email.com");
             personList.add(person5);
             
-            // Anggota mahasiswa
+            // anggota mahasiswa
             Person person6 = new Person("P006", "Fani Wijaya", "Jl. Kampus No. 3", "086789012345");
             person6.setEmail("fani.wijaya@university.edu");
             personList.add(person6);

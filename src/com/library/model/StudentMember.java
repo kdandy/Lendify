@@ -6,14 +6,13 @@ public class StudentMember extends Member {
     private String department;
     private int yearOfStudy;
     
-    // Constructors
+    // konsruktor
     public StudentMember() {
         super();
     }
     
     public StudentMember(Member member, String studentId, String faculty) {
         super();
-        // Copy member properties
         setMemberProperties(member);
         this.studentId = studentId;
         this.faculty = faculty;
@@ -21,7 +20,6 @@ public class StudentMember extends Member {
     
     public StudentMember(Member member, String studentId, String faculty, String department, int yearOfStudy) {
         super();
-        // Copy member properties
         setMemberProperties(member);
         this.studentId = studentId;
         this.faculty = faculty;
@@ -30,18 +28,13 @@ public class StudentMember extends Member {
     }
     
     private void setMemberProperties(Member member) {
-        // Copy Person properties
         super.setName(member.getName());
         super.setAddress(member.getAddress());
         super.setPhoneNumber(member.getPhoneNumber());
         super.setEmail(member.getEmail());
-        
-        // Since we can't directly access private fields of Member, 
-        // we need a workaround in a real implementation.
-        // Ideally, Member would have a method to copy its state to another Member instance.
     }
     
-    // Getters and Setters
+    // getter dan setter
     public String getStudentId() {
         return studentId;
     }
@@ -76,12 +69,12 @@ public class StudentMember extends Member {
     
     @Override
     public int getMaxBooks() {
-        return 8; // Students can borrow more books
+        return 8;
     }
     
     @Override
     public int getMaxLoanDays() {
-        return 21; // Students can borrow for a longer period
+        return 21;
     }
     
     @Override

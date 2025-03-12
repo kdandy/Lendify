@@ -10,7 +10,7 @@ public class Library {
     private LibraryCollection collection;
     private List<Librarian> librarians;
     
-    // Constructor
+    // konsruktor
     public Library(String name, String address) {
         this.name = name;
         this.address = address;
@@ -18,7 +18,7 @@ public class Library {
         this.librarians = new ArrayList<>();
     }
     
-    // Getters and Setters
+    // getters and setters
     public String getName() {
         return name;
     }
@@ -39,7 +39,7 @@ public class Library {
         return collection;
     }
     
-    // Methods
+    // metode
     public void addLibrarian(Librarian librarian) {
         librarians.add(librarian);
     }

@@ -11,14 +11,14 @@ public class LibraryCollection {
     private List<BookCategory> categories;
     private Map<BookCategory, List<Book>> categoryBooks;
     
-    // Constructor
+    // konstruktor
     public LibraryCollection() {
         this.books = new ArrayList<>();
         this.categories = new ArrayList<>();
         this.categoryBooks = new HashMap<>();
     }
     
-    // Getters
+    // getters
     public List<Book> getBooks() {
         return books;
     }
@@ -27,7 +27,7 @@ public class LibraryCollection {
         return categories;
     }
     
-    // Methods
+    // metode
     public void addBook(Book book) {
         books.add(book);
     }
@@ -35,7 +35,7 @@ public class LibraryCollection {
     public void removeBook(Book book) {
         books.remove(book);
         
-        // Remove from all categories
+        // remove book from all categories
         for (BookCategory category : categories) {
             List<Book> categoryBookList = categoryBooks.get(category);
             if (categoryBookList != null) {
