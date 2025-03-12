@@ -11,6 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Dialog.ModalityType;
 
 /**
  * Panel untuk manajemen pustakawan
@@ -125,7 +126,7 @@ public class LibrarianPanel extends BasePanel {
      * Menampilkan dialog untuk menambah pustakawan baru
      */
     private void showAddLibrarianDialog() {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Pustakawan Baru", true);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Pustakawan Baru", ModalityType.APPLICATION_MODAL);
         dialog.setSize(500, 500);
         dialog.setLocationRelativeTo(this);
         
@@ -335,7 +336,7 @@ public class LibrarianPanel extends BasePanel {
      * @param librarian Pustakawan yang akan diedit
      */
     private void showEditLibrarianDialog(Librarian librarian) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Pustakawan", true);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Pustakawan", ModalityType.APPLICATION_MODAL);
         dialog.setSize(500, 500);
         dialog.setLocationRelativeTo(this);
         

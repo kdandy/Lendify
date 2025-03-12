@@ -4,5 +4,6 @@ public enum LoanStatus {
     ACTIVE,
     COMPLETED,
     OVERDUE,
+    RETURNED,
     LOST
 }

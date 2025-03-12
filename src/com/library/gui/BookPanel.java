@@ -180,7 +180,7 @@ public class BookPanel extends BasePanel {
      * Menampilkan dialog untuk menambah buku baru
      */
     private void showAddBookDialog() {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Buku Baru", true);
+        JDialog dialog = new JDialog((Window) getParent(), "Tambah Buku Baru", true);
         dialog.setSize(500, 600);
         dialog.setLocationRelativeTo(this);
         
@@ -455,147 +455,6 @@ public class BookPanel extends BasePanel {
         }
     }
     
-    /**
-     * Menampilkan dialog untuk menambah salinan buku
-     * @param book Buku yang akan ditambah salinannya
-     */
-    private void showAddBookCopyDialog(Book book) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Salinan Buku", true);
-        dialog.setSize(400, 350);
-        dialog.setLocationRelativeTo(this);
-        
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Book info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Buku:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField bookField = new JTextField(book.getTitle(), 15);
-        bookField.setEditable(false);
-        panel.add(bookField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("ISBN:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField isbnField = new JTextField(book.getISBN(), 15);
-        isbnField.setEditable(false);
-        panel.add(isbnField, gbc);
-        
-        // Copy info
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Kode Barcode:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField barcodeField = new JTextField(15);
-        panel.add(barcodeField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Harga:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField priceField = new JTextField("0.0", 15);
-        panel.add(priceField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Lokasi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField locationField = new JTextField(15);
-        panel.add(locationField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Hanya Referensi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JCheckBox referenceOnlyCheck = new JCheckBox();
-        panel.add(referenceOnlyCheck, gbc);
-        
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
-        
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton cancelButton = new JButton("Batal");
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        JButton saveButton = createStyledButton("Simpan", new Color(39, 174, 96));
-        saveButton.addActionListener(e -> {
-            try {
-                // Validasi input
-                if (barcodeField.getText().isEmpty()) {
-                    showErrorMessage("Kode barcode harus diisi!", "Error");
-                    return;
-                }
-                
-                // Cek duplikat barcode
-                Map<String, BookItem> bookItems = parentFrame.getBookItems();
-                if (bookItems.containsKey(barcodeField.getText().trim())) {
-                    showErrorMessage("Salinan dengan barcode tersebut sudah ada!", "Error");
-                    return;
-                }
-                
-                // Parse input numerik
-                double price;
-                try {
-                    price = Double.parseDouble(priceField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    showErrorMessage("Harga harus berupa angka!", "Error");
-                    return;
-                }
-                
-                // Buat salinan buku
-                BookItem bookItem = currentLibrarian.addBookItem(book, barcodeField.getText().trim());
-                bookItem.setPrice(price);
-                bookItem.setLocation(locationField.getText().trim());
-                bookItem.setReferenceOnly(referenceOnlyCheck.isSelected());
-                
-                bookItems.put(bookItem.getBarcode(), bookItem);
-                
-                dialog.dispose();
-                showInfoMessage("Salinan buku berhasil ditambahkan!", "Sukses");
-                
-                // Refresh tabel buku
-                refreshBooksTable(library.getCollection().getBooks());
-                
-            } catch (Exception ex) {
-                showErrorMessage("Error: " + ex.getMessage(), "Error");
-            }
-        });
-        
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        
-        panel.add(buttonPanel, gbc);
-        
-        dialog.add(panel);
-        dialog.setVisible(true);
-    }
-    
-    /**
-     * Menampilkan dialog untuk mengedit buku
-     * @param book Buku yang akan diedit
-     */
     private void showEditBookDialog(Book book) {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Buku", true);
         dialog.setSize(500, 600);
@@ -615,7 +474,7 @@ public class BookPanel extends BasePanel {
         gbc.gridx = 1;
         gbc.gridy = 0;
         JTextField isbnField = new JTextField(book.getISBN(), 15);
-        isbnField.setEditable(false); // ISBN tidak bisa diubah
+        isbnField.setEditable(false);
         panel.add(isbnField, gbc);
         
         gbc.gridx = 0;
@@ -782,12 +641,12 @@ public class BookPanel extends BasePanel {
     }
     
     /**
-     * Menampilkan dialog untuk melihat detail buku
-     * @param book Buku yang akan ditampilkan detailnya
+     * Menampilkan dialog untuk menambah salinan buku
+     * @param book Buku yang akan ditambah salinannya
      */
-    private void showBookDetailsDialog(Book book) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Detail Buku", true);
-        dialog.setSize(500, 600);
+    private void showAddBookCopyDialog(Book book) {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Salinan Buku", true);
+        dialog.setSize(400, 350);
         dialog.setLocationRelativeTo(this);
         
         JPanel panel = new JPanel(new GridBagLayout());
@@ -799,109 +658,64 @@ public class BookPanel extends BasePanel {
         // Book info
         gbc.gridx = 0;
         gbc.gridy = 0;
-        panel.add(new JLabel("ISBN:"), gbc);
+        panel.add(new JLabel("Buku:"), gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 0;
+        JTextField bookField = new JTextField(book.getTitle(), 15);
+        bookField.setEditable(false);
+        panel.add(bookField, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("ISBN:"), gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 1;
         JTextField isbnField = new JTextField(book.getISBN(), 15);
         isbnField.setEditable(false);
         panel.add(isbnField, gbc);
         
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Judul:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField titleField = new JTextField(book.getTitle(), 15);
-        titleField.setEditable(false);
-        panel.add(titleField, gbc);
-        
+        // Copy info
         gbc.gridx = 0;
         gbc.gridy = 2;
-        panel.add(new JLabel("Pengarang:"), gbc);
+        panel.add(new JLabel("Kode Barcode:"), gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 2;
-        JTextField authorField = new JTextField(book.getAuthor(), 15);
-        authorField.setEditable(false);
-        panel.add(authorField, gbc);
+        JTextField barcodeField = new JTextField(15);
+        panel.add(barcodeField, gbc);
         
         gbc.gridx = 0;
         gbc.gridy = 3;
-        panel.add(new JLabel("Penerbit:"), gbc);
+        panel.add(new JLabel("Harga:"), gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 3;
-        JTextField publisherField = new JTextField(book.getPublisher(), 15);
-        publisherField.setEditable(false);
-        panel.add(publisherField, gbc);
+        JTextField priceField = new JTextField("0.0", 15);
+        panel.add(priceField, gbc);
         
         gbc.gridx = 0;
         gbc.gridy = 4;
-        panel.add(new JLabel("Tahun Terbit:"), gbc);
+        panel.add(new JLabel("Lokasi:"), gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 4;
-        JTextField yearField = new JTextField(String.valueOf(book.getPublicationYear()), 15);
-        yearField.setEditable(false);
-        panel.add(yearField, gbc);
+        JTextField locationField = new JTextField(15);
+        panel.add(locationField, gbc);
         
         gbc.gridx = 0;
         gbc.gridy = 5;
-        panel.add(new JLabel("Deskripsi:"), gbc);
+        panel.add(new JLabel("Hanya Referensi:"), gbc);
         
         gbc.gridx = 1;
         gbc.gridy = 5;
-        JTextArea descriptionArea = new JTextArea(book.getDescription(), 3, 15);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setEditable(false);
-        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
-        panel.add(descScrollPane, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panel.add(new JLabel("Jumlah Halaman:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 6;
-        JTextField pagesField = new JTextField(String.valueOf(book.getPages()), 15);
-        pagesField.setEditable(false);
-        panel.add(pagesField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        panel.add(new JLabel("Format:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 7;
-        JTextField formatField = new JTextField(book.getFormat().toString(), 15);
-        formatField.setEditable(false);
-        panel.add(formatField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Bahasa:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 8;
-        JTextField languageField = new JTextField(book.getLanguage().toString(), 15);
-        languageField.setEditable(false);
-        panel.add(languageField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        panel.add(new JLabel("Kategori:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 9;
-        JTextField categoryField = new JTextField(book.getCategory().getName(), 15);
-        categoryField.setEditable(false);
-        panel.add(categoryField, gbc);
+        JCheckBox referenceOnlyCheck = new JCheckBox();
+        panel.add(referenceOnlyCheck, gbc);
         
         // Buttons
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(20, 5, 5, 5);
         

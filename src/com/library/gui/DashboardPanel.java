@@ -145,6 +145,7 @@ public class DashboardPanel extends BasePanel {
         List<Object[]> activities = new ArrayList<>();
         
         // Tambahkan peminjaman terbaru
+        // Ambil beberapa peminjaman terbaru untuk ditampilkan
         for (BookLoan loan : parentFrame.getLoans().values()) {
             String activity = (loan.getStatus() == LoanStatus.RETURNED) ? "Pengembalian" : "Peminjaman";
             String date = dateFormat.format(loan.getIssueDate());
@@ -154,6 +155,7 @@ public class DashboardPanel extends BasePanel {
             
             activities.add(new Object[]{date, activity, member, book, status});
         }
+
         
         // Tambahkan reservasi terbaru
         for (Reservation reservation : parentFrame.getReservations().values()) {

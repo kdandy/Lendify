@@ -2,11 +2,10 @@ package com.library;
 
 import com.library.enums.*;
 import com.library.model.*;
-import com.library.gui.LendifyGUI;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeUnit; // sistem login
 
 public class Main {
     private static Scanner scanner = new Scanner(System.in);
@@ -25,7 +24,6 @@ public class Main {
     // akses sistem
     private static final String SYSTEM_PASSWORD = "lendify";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
-    
     // akses sistem    
     public static void main(String[] args) {
         System.out.println("=============================================");
@@ -48,71 +46,10 @@ public class Main {
             }
         }
         System.out.println("\nSistem siap digunakan!");
+        // Sistem login end
         
-        // Inisialisasi perpustakaan
         initializeLibrary();
         
-        // Pilih antarmuka
-        chooseInterface();
-    }
-    
-    /**
-     * Sistem login
-     * @return true jika login berhasil, false jika gagal setelah beberapa percobaan
-     */
-    private static boolean login() {
-        int attempts = 0;
-        boolean loginSuccess = false;
-        
-        while (attempts < MAX_LOGIN_ATTEMPTS && !loginSuccess) {
-            System.out.print("Masukkan password: ");
-            String password = scanner.nextLine().trim();
-            
-            if (password.equals(SYSTEM_PASSWORD)) {
-                System.out.println("Login berhasil! Selamat datang di Sistem Manajemen Perpustakaan Lendify.");
-                loginSuccess = true;
-            } else {
-                attempts++;
-                int remainingAttempts = MAX_LOGIN_ATTEMPTS - attempts;
-                
-                if (remainingAttempts > 0) {
-                    System.out.println("Password salah. Sisa percobaan: " + remainingAttempts);
-                } else {
-                    System.out.println("Password salah.");
-                }
-            }
-        }
-        
-        return loginSuccess;
-    }
-    
-    /**
-     * Memilih antarmuka yang akan digunakan (Terminal atau GUI)
-     */
-    private static void chooseInterface() {
-        System.out.println("\n==== PILIH ANTARMUKA ====");
-        System.out.println("1. Terminal (Text-based)");
-        System.out.println("2. GUI (Graphical User Interface)");
-        
-        int choice = getIntInput("Pilih jenis antarmuka: ");
-        
-        switch (choice) {
-            case 1:
-                runTerminalInterface();
-                break;
-            case 2:
-                runGUIInterface();
-                break;
-            default:
-                System.out.println("Pilihan tidak valid. Menggunakan Terminal sebagai default.");
-                runTerminalInterface();
-        }
-    }
-    
-    /**
-     * Menjalankan antarmuka terminal
-     */
-    private static void runTerminalInterface() {
         boolean exit = false;
         while (!exit) {
             displayMainMenu();
@@ -146,9 +83,6 @@ public class Main {
                 case 9:
                     runDemoMode();
                     break;
-                case 10:
-                    runGUIInterface();
-                    return;
                 case 0:
                     exit = true;
                     System.out.println("Terima kasih telah menggunakan Sistem Manajemen Perpustakaan Lendify!");
@@ -162,20 +96,36 @@ public class Main {
     }
     
     /**
-     * Menjalankan antarmuka GUI
+     * Sistem login
+     * @return true jika login berhasil, false jika gagal setelah beberapa percobaan
      */
-    private static void runGUIInterface() {
-        System.out.println("Memulai antarmuka GUI...");
+    private static boolean login() {
+        int attempts = 0;
+        boolean loginSuccess = false;
         
-        // Tutup scanner sementara untuk menghindari konflik resource
-        scanner.close();
+        while (attempts < MAX_LOGIN_ATTEMPTS && !loginSuccess) {
+            System.out.print("Masukkan password: ");
+            String password = scanner.nextLine().trim();
+            
+            if (password.equals(SYSTEM_PASSWORD)) {
+                System.out.println("Login berhasil! Selamat datang di Sistem Manajemen Perpustakaan Lendify.");
+                loginSuccess = true;
+            } else {
+                attempts++;
+                int remainingAttempts = MAX_LOGIN_ATTEMPTS - attempts;
+                
+                if (remainingAttempts > 0) {
+                    System.out.println("Password salah. Sisa percobaan: " + remainingAttempts);
+                } else {
+                    System.out.println("Password salah.");
+                }
+            }
+        }
         
-        // Jalankan GUI dalam thread terpisah
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            LendifyGUI gui = new LendifyGUI(library, currentLibrarian, members, categories, books, bookItems, loans, reservations);
-            gui.setVisible(true);
-        });
+        return loginSuccess;
     }
+    
+    // SISTEM LOGIN END
     
     private static void displayMainMenu() {
         System.out.println("\n==== MENU UTAMA ====");
@@ -188,7 +138,6 @@ public class Main {
         System.out.println("7. Cari Buku");
         System.out.println("8. Lihat Statistik Perpustakaan");
         System.out.println("9. Jalankan Demo Mode");
-        System.out.println("10. Beralih ke Antarmuka GUI");
         System.out.println("0. Keluar");
     }
     
