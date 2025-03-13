@@ -118,7 +118,7 @@ public class MainPanel extends JPanel {
      * Membuat panel menu utama dengan tombol-tombol
      */
     private JPanel createMenuPanel() {
-        JPanel panel = new JPanel(new GridLayout(3, 3, 15, 15));
+        JPanel panel = new JPanel(new GridLayout(4, 3, 15, 15)); // 4 baris, 3 kolom (total 12 slot)
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         // Tombol-tombol menu
@@ -130,6 +130,7 @@ public class MainPanel extends JPanel {
         JButton reservationButton = createMenuButton("Kelola Reservasi", "UNDIPOfficial.png", e -> mainWindow.showReservationPanel());
         JButton searchButton = createMenuButton("Cari Buku", "UNDIPOfficial.png", e -> mainWindow.showSearchPanel());
         JButton statisticsButton = createMenuButton("Statistik Perpustakaan", "UNDIPOfficial.png", e -> mainWindow.showStatisticsPanel());
+        JButton demoButton = createMenuButton("Jalankan Demo", "UNDIPOfficial.png", e -> mainWindow.runDemoMode());
         JButton exitButton = createMenuButton("Keluar", "UNDIPOfficial.png", e -> System.exit(0));
         
         // Tambahkan tombol ke panel
@@ -141,7 +142,11 @@ public class MainPanel extends JPanel {
         panel.add(reservationButton);
         panel.add(searchButton);
         panel.add(statisticsButton);
+        panel.add(demoButton);
         panel.add(exitButton);
+        // Dua slot kosong
+        panel.add(new JLabel());
+        panel.add(new JLabel());
         
         return panel;
     }
