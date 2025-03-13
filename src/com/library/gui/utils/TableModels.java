@@ -1,6 +1,5 @@
 package com.library.gui.utils;
 
-import com.library.enums.*;
 import com.library.model.*;
 
 import javax.swing.table.AbstractTableModel;
@@ -234,10 +233,13 @@ public class TableModels {
     /**
      * Model tabel untuk anggota
      */
+/**
+ * Model tabel untuk anggota
+ */
     public static class MemberTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 1L;
         private List<Member> members;
-        private final String[] columnNames = {"ID", "Nama", "Tipe", "Email", "Telepon", "Status", "Expire Date"};
+        private final String[] columnNames = {"ID", "Nama", "Email", "Telepon", "Tipe", "Status", "Expire Date"};
         
         public MemberTableModel(List<Member> members) {
             this.members = members;

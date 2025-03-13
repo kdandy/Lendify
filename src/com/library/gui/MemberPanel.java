@@ -17,7 +17,6 @@ import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Panel untuk kelola anggota perpustakaan
@@ -142,24 +141,80 @@ public class MemberPanel extends JPanel {
         renewButton = new JButton("Perpanjang Keanggotaan");
         toggleStatusButton = new JButton("Aktifkan/Nonaktifkan");
         backButton = new JButton("Kembali");
-        
-        addButton.addActionListener(e -> addMember());
-        editButton.addActionListener(e -> editMember());
-        detailsButton.addActionListener(e -> viewMemberDetails());
-        renewButton.addActionListener(e -> renewMembership());
-        toggleStatusButton.addActionListener(e -> toggleMemberStatus());
-        backButton.addActionListener(e -> mainWindow.showMainPanel());
-        
+
+        // Add tooltips for better usability
+        addButton.setToolTipText("Tambah anggota baru ke perpustakaan");
+        editButton.setToolTipText("Edit data anggota yang dipilih");
+        detailsButton.setToolTipText("Tampilkan detail lengkap anggota yang dipilih");
+        renewButton.setToolTipText("Perpanjang masa keanggotaan anggota yang dipilih");
+        toggleStatusButton.setToolTipText("Aktifkan atau nonaktifkan status anggota yang dipilih");
+        backButton.setToolTipText("Kembali ke menu utama");
+
+        // Set up action listeners with explicit new ActionListener objects for better debugging
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Add button clicked");
+                addMember();
+            }
+        });
+
+        editButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Edit button clicked");
+                editMember();
+            }
+        });
+
+        detailsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Details button clicked");
+                viewMemberDetails();
+            }
+        });
+
+        renewButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Renew button clicked");
+                renewMembership();
+            }
+        });
+
+        toggleStatusButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Toggle status button clicked");
+                toggleMemberStatus();
+            }
+        });
+
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mainWindow.showMainPanel();
+            }
+        });
+
         buttonPanel.add(addButton);
         buttonPanel.add(editButton);
         buttonPanel.add(detailsButton);
         buttonPanel.add(renewButton);
         buttonPanel.add(toggleStatusButton);
         buttonPanel.add(backButton);
-        
+
         actionPanel.add(buttonPanel, BorderLayout.SOUTH);
         add(actionPanel, BorderLayout.SOUTH);
-        
+
+        // Tambahkan selection listener untuk update button states
+        memberTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateButtonStates();
+            }
+        });
+
         // Set initial button states
         updateButtonStates();
     }
@@ -179,11 +234,19 @@ public class MemberPanel extends JPanel {
         boolean isBasic = mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC;
         boolean memberSelected = memberTable.getSelectedRow() != -1;
         
+        System.out.println("updateButtonStates: memberSelected = " + memberSelected);
+        
         addButton.setEnabled(!isBasic);
         editButton.setEnabled(memberSelected);
         detailsButton.setEnabled(memberSelected);
         renewButton.setEnabled(!isBasic && memberSelected);
         toggleStatusButton.setEnabled(!isBasic && memberSelected);
+        
+        // Force repaint of buttons to ensure state is visually updated
+        editButton.repaint();
+        detailsButton.repaint();
+        renewButton.repaint();
+        toggleStatusButton.repaint();
     }
     
     /**
@@ -328,7 +391,7 @@ public class MemberPanel extends JPanel {
         
         // Tampilkan dialog
         int result = JOptionPane.showConfirmDialog(
-            this, formPanel, "Tambah Anggota " + (isStudent ? "Mahasiswa" : "Reguler"), 
+            this, formPanel, "Tambah Anggota " + (isStudent ? "Mahasiswa" : "Reguler"),
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         
         if (result == JOptionPane.OK_OPTION) {
@@ -393,7 +456,7 @@ public class MemberPanel extends JPanel {
             }
         }
     }
-    
+
     /**
      * Edit anggota yang dipilih
      */
@@ -539,6 +602,14 @@ public class MemberPanel extends JPanel {
             return;
         }
         
+        // Add null check for expiry date before showing dialog
+        if (member.getExpiryDate() == null) {
+            // Set a default expiry date if it's null
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.YEAR, 1); // Add one year from now
+            member.setExpiryDate(cal.getTime());
+        }
+        
         DialogUtils.showMemberDetailsDialog(this, member);
     }
     
@@ -555,6 +626,13 @@ public class MemberPanel extends JPanel {
         if (member == null) {
             GUIUtils.errorDialog(this, "Pilih anggota yang akan diperpanjang keanggotaannya!", "Tidak Ada Anggota Dipilih");
             return;
+        }
+        
+        // Ensure expiry date is not null
+        if (member.getExpiryDate() == null) {
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.YEAR, 1); // Add one year from now
+            member.setExpiryDate(cal.getTime());
         }
         
         // Panel untuk input jumlah bulan
@@ -678,9 +756,22 @@ public class MemberPanel extends JPanel {
      */
     private Member getSelectedMember() {
         int selectedRow = memberTable.getSelectedRow();
+        
+        System.out.println("getSelectedMember: selectedRow = " + selectedRow); // Debug line
+        
         if (selectedRow != -1) {
-            int modelRow = memberTable.convertRowIndexToModel(selectedRow);
-            return tableModel.getMemberAt(modelRow);
+            try {
+                int modelRow = memberTable.convertRowIndexToModel(selectedRow);
+                System.out.println("getSelectedMember: modelRow = " + modelRow); // Debug line
+                Member member = tableModel.getMemberAt(modelRow);
+                System.out.println("getSelectedMember: member = " + (member != null ? member.getName() : "null")); // Debug line
+                
+                return member;
+            } catch (Exception e) {
+                System.err.println("Error getting selected member: " + e.getMessage());
+                e.printStackTrace();
+                return null;
+            }
         }
         return null;
     }

@@ -12,7 +12,6 @@ import com.library.model.StudentMember;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -26,7 +25,7 @@ public class StatisticsPanel extends JPanel {
     private JPanel chartsPanel;
     private JButton refreshButton;
     private JButton backButton;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    private SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd-MM-yyyy");
     
     // Labels untuk data statistik
     private JLabel totalBooksLabel;

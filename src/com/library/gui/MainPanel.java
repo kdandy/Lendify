@@ -1,6 +1,5 @@
 package com.library.gui;
 
-import com.library.gui.utils.GUIUtils;
 import com.library.model.Library;
 import com.library.model.Librarian;
 
@@ -79,7 +78,8 @@ public class MainPanel extends JPanel {
             System.out.println("Logo UNDIP tidak ditemukan: " + e.getMessage());
         }
         
-        JLabel titleLabel = new JLabel("SISTEM MANAJEMEN PERPUSTAKAAN LENDIFY", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("<html><center>SISTEM MANAJEMEN PERPUSTAKAAN<br>LENDIFY<br>(Program Studi Informatika)</center></html>", SwingConstants.CENTER);
+
         titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
         titlePanel.add(titleLabel, BorderLayout.CENTER);
         
@@ -118,7 +118,7 @@ public class MainPanel extends JPanel {
      * Membuat panel menu utama dengan tombol-tombol
      */
     private JPanel createMenuPanel() {
-        JPanel panel = new JPanel(new GridLayout(4, 3, 15, 15)); // 4 baris, 3 kolom (total 12 slot)
+        JPanel panel = new JPanel(new GridLayout(4, 3, 15, 15));
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         // Tombol-tombol menu
