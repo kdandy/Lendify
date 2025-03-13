@@ -122,25 +122,25 @@ public class MainPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
         // Tombol-tombol menu
-        JButton librarianButton = createMenuButton("Kelola Pustakawan", "UNDIPOfficial.png", e -> mainWindow.showLibrarianPanel());
-        JButton categoryButton = createMenuButton("Kelola Kategori", "UNDIPOfficial.png", e -> mainWindow.showCategoryPanel());
-        JButton bookButton = createMenuButton("Kelola Buku", "UNDIPOfficial.png", e -> mainWindow.showBookPanel());
-        JButton memberButton = createMenuButton("Kelola Anggota", "UNDIPOfficial.png", e -> mainWindow.showMemberPanel());
-        JButton loanButton = createMenuButton("Peminjaman & Pengembalian", "UNDIPOfficial.png", e -> mainWindow.showLoanPanel());
-        JButton reservationButton = createMenuButton("Kelola Reservasi", "UNDIPOfficial.png", e -> mainWindow.showReservationPanel());
-        JButton searchButton = createMenuButton("Cari Buku", "UNDIPOfficial.png", e -> mainWindow.showSearchPanel());
-        JButton statisticsButton = createMenuButton("Statistik Perpustakaan", "UNDIPOfficial.png", e -> mainWindow.showStatisticsPanel());
-        JButton demoButton = createMenuButton("Jalankan Demo", "UNDIPOfficial.png", e -> mainWindow.runDemoMode());
-        JButton exitButton = createMenuButton("Keluar", "UNDIPOfficial.png", e -> System.exit(0));
+        JButton searchButton = createMenuButton("Cari Buku", "search.png", e -> mainWindow.showSearchPanel());
+        JButton librarianButton = createMenuButton("Kelola Pustakawan", "role-2.png", e -> mainWindow.showLibrarianPanel());
+        JButton categoryButton = createMenuButton("Kelola Kategori", "kategori.png", e -> mainWindow.showCategoryPanel());
+        JButton bookButton = createMenuButton("Kelola Buku", "book.png", e -> mainWindow.showBookPanel());
+        JButton memberButton = createMenuButton("Kelola Anggota", "user.png", e -> mainWindow.showMemberPanel());
+        JButton loanButton = createMenuButton("Peminjaman & Pengembalian", "pinjaman.png", e -> mainWindow.showLoanPanel());
+        JButton reservationButton = createMenuButton("Kelola Reservasi", "reservasi.png", e -> mainWindow.showReservationPanel());
+        JButton statisticsButton = createMenuButton("Statistik Perpustakaan", "line.png", e -> mainWindow.showStatisticsPanel());
+        JButton demoButton = createMenuButton("Jalankan Demo", "demo.png", e -> mainWindow.runDemoMode());
+        JButton exitButton = createMenuButton("Keluar", "exit.png", e -> System.exit(0));
         
         // Tambahkan tombol ke panel
         panel.add(librarianButton);
+        panel.add(searchButton);
         panel.add(categoryButton);
         panel.add(bookButton);
         panel.add(memberButton);
         panel.add(loanButton);
         panel.add(reservationButton);
-        panel.add(searchButton);
         panel.add(statisticsButton);
         panel.add(demoButton);
         panel.add(exitButton);

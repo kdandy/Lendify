@@ -77,7 +77,7 @@ public class LendifyGUI extends JFrame {
      * Setup komponen GUI
      */ 
     private void setupGUI() {
-        setTitle("Sistem Manajemen Perpustakaan - LENDIFY (GUI)");
+        setTitle("Sistem Manajemen Perpustakaan - Lendify (Kelompok 2)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);
         setLocationRelativeTo(null);

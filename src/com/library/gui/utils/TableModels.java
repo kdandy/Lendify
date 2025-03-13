@@ -277,15 +277,14 @@ public class TableModels {
             switch (columnIndex) {
                 case 0: return member.getMemberId();
                 case 1: return member.getName();
-                case 2: {
-                    if (member instanceof StudentMember) return "Mahasiswa";
-                    else if (member instanceof RegularMember) return "Reguler";
-                    else return "Anggota";
-                }
-                case 3: return member.getEmail();
-                case 4: return member.getPhoneNumber();
-                case 5: return member.getStatus();
-                case 6: return DATE_FORMAT.format(member.getExpiryDate());
+                case 2: return member.getEmail();
+                case 3: return member.getPhoneNumber();
+                case 4: return member instanceof StudentMember ? "Mahasiswa" : "Reguler";
+                case 5: return member.isActive() ? "Aktif" : "Tidak Aktif";
+                case 6: 
+                    // Add null check before formatting date
+                    Date expiryDate = member.getExpiryDate();
+                    return expiryDate != null ? DATE_FORMAT.format(expiryDate) : "N/A";
                 default: return null;
             }
         }
