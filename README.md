@@ -38,6 +38,18 @@ Lendify adalah sistem manajemen perpustakaan berbasis Java yang menerapkan konse
 ```
 src/
 ├── com/
+│   ├── icons/
+│   │   ├── UNDIPOfficial.png
+│   │   ├── book.png
+│   │   ├── demo.png
+│   │   ├── exit.png
+│   │   ├── kategori.png
+│   │   ├── line.png
+│   │   ├── pinjaman.png
+│   │   ├── reservasi.png
+│   │   ├── role-2.png
+│   │   ├── search.png
+│   │   └── user.png
 │   └── library/
 │       ├── enums/
 │       │   ├── BookFormat.java
@@ -53,6 +65,22 @@ src/
 │       │   ├── InvalidOperationException.java
 │       │   ├── MaxBooksReachedException.java
 │       │   └── ReferenceOnlyException.java
+│       ├── gui/
+│       │   ├── utils/
+│       │   │   ├── DialogUtils.java
+│       │   │   ├── GUIUtils.java
+│       │   │   └── TableModels.java
+│       │   ├── BookPanel.java
+│       │   ├── CategoryPanel.java
+│       │   ├── LendifyGUI.java
+│       │   ├── LibrarianPanel.java
+│       │   ├── LoanPanel.java
+│       │   ├── LoginPanel.java
+│       │   ├── MainPanel.java
+│       │   ├── MemberPanel.java
+│       │   ├── ReservationPanel.java
+│       │   ├── SearchPanel.java
+│       │   └── StatisticsPanel.java
 │       ├── model/
 │       │   ├── Book.java
 │       │   ├── BookCategory.java
@@ -67,6 +95,9 @@ src/
 │       │   ├── Reservation.java
 │       │   └── StudentMember.java
 │       └── Main.java
+├── .gitignore
+├── LICENSE
+└── README.md
 ```
 
 ## Cara Menjalankan Aplikasi
