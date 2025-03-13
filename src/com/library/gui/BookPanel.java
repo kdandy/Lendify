@@ -1,337 +1,437 @@
 package com.library.gui;
 
-import com.library.enums.*;
-import com.library.model.*;
+import com.library.enums.BookFormat;
+import com.library.enums.Language;
+import com.library.enums.LibrarianPermission;
+import com.library.gui.utils.DialogUtils;
+import com.library.gui.utils.GUIUtils;
+import com.library.gui.utils.TableModels.BookTableModel;
+import com.library.gui.utils.TableModels.BookItemTableModel;
+import com.library.model.Book;
+import com.library.model.BookCategory;
+import com.library.model.BookItem;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+
 
 /**
- * Panel untuk manajemen buku
+ * Panel untuk kelola buku
  */
-public class BookPanel extends BasePanel {
-    private DefaultTableModel bookModel;
-    private JTable booksTable;
-    private JButton addButton;
-    private JButton addCopyButton;
-    private JButton editButton;
-    private JButton detailButton;
-    private JButton deleteButton;
-    private JTextField searchField;
 
+public class BookPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private LendifyGUI mainWindow;
+    
+    // Panel untuk daftar buku
+    private JPanel bookListPanel;
+    private JTable bookTable;
+    private BookTableModel bookTableModel;
+    private JTextField bookSearchField;
+    
+    // Panel untuk detail buku yang dipilih
+    private JPanel bookDetailsPanel;
+    private JLabel titleValueLabel;
+    private JLabel authorValueLabel;
+    private JLabel publisherValueLabel;
+    private JLabel yearValueLabel;
+    private JLabel isbnValueLabel;
+    private JLabel formatValueLabel;
+    private JLabel languageValueLabel;
+    private JLabel pagesValueLabel;
+    private JTextArea descriptionArea;
+    
+    // Panel untuk salinan buku (book items)
+    private JPanel itemsPanel;
+    private JTable itemsTable;
+    private BookItemTableModel itemsTableModel;
+    
+    // Tombol-tombol aksi
+    private JButton addBookButton;
+    private JButton editBookButton;
+    private JButton deleteBookButton;
+    private JButton addItemButton;
+    private JButton editItemButton;
+    private JButton deleteItemButton;
+    private JButton backButton;
+    
     /**
-     * Konstruktor
-     * @param parentFrame Frame parent (LendifyGUI)
+     * Constructor untuk BookPanel
      */
-    public BookPanel(LendifyGUI parentFrame) {
-        super(parentFrame);
+    public BookPanel(LendifyGUI mainWindow) {
+        this.mainWindow = mainWindow;
+        setupUI();
     }
     
-    @Override
-    protected void initComponents() {
-        // Tambahkan judul panel
-        JLabel titleLabel = createTitleLabel("Kelola Buku");
-        add(titleLabel, BorderLayout.NORTH);
+    /**
+     * Setup komponen UI
+     */
+    private void setupUI() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Panel tombol aksi
-        JPanel toolsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Panel judul
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Kelola Buku", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
+        add(titlePanel, BorderLayout.NORTH);
         
-        addButton = createStyledButton("Tambah Buku", new Color(39, 174, 96));
-        addButton.addActionListener(e -> showAddBookDialog());
+        // Panel utama dengan split pane
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(500);
+        splitPane.setResizeWeight(0.5);
         
-        addCopyButton = createStyledButton("Tambah Salinan", new Color(41, 128, 185));
-        addCopyButton.setEnabled(false);
-        addCopyButton.addActionListener(e -> addCopyToSelectedBook());
+        // Panel kiri untuk daftar buku
+        bookListPanel = createBookListPanel();
+        splitPane.setLeftComponent(bookListPanel);
         
-        editButton = createStyledButton("Edit Buku", new Color(243, 156, 18));
-        editButton.setEnabled(false);
-        editButton.addActionListener(e -> editSelectedBook());
+        // Panel kanan untuk detail buku
+        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
         
-        detailButton = createStyledButton("Lihat Detail", new Color(52, 152, 219));
-        detailButton.setEnabled(false);
-        detailButton.addActionListener(e -> viewSelectedBookDetails());
+        // Panel detail buku
+        bookDetailsPanel = createBookDetailsPanel();
+        rightPanel.add(bookDetailsPanel, BorderLayout.NORTH);
         
-        deleteButton = createStyledButton("Hapus Buku", new Color(231, 76, 60));
-        deleteButton.setEnabled(false);
-        deleteButton.addActionListener(e -> deleteSelectedBook());
+        // Panel salinan buku
+        itemsPanel = createBookItemsPanel();
+        rightPanel.add(itemsPanel, BorderLayout.CENTER);
         
-        // Sesuaikan status tombol berdasarkan izin pustakawan saat ini
-        if (currentLibrarian.getPermission() == LibrarianPermission.BASIC) {
-            addButton.setEnabled(false);
-            addCopyButton.setEnabled(false);
-            editButton.setEnabled(false);
-            deleteButton.setEnabled(false);
-        }
+        splitPane.setRightComponent(rightPanel);
+        add(splitPane, BorderLayout.CENTER);
         
-        toolsPanel.add(addButton);
-        toolsPanel.add(addCopyButton);
-        toolsPanel.add(editButton);
-        toolsPanel.add(detailButton);
-        toolsPanel.add(deleteButton);
+        // Panel tombol
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        backButton = new JButton("Kembali ke Menu Utama");
+        backButton.addActionListener(e -> mainWindow.showMainPanel());
+        buttonPanel.add(backButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Set initial button states
+        updateButtonStates();
+    }
+    
+    /**
+     * Buat panel untuk daftar buku
+     */
+    private JPanel createBookListPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Daftar Buku"));
         
         // Panel pencarian
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        searchField = new JTextField(20);
-        JButton searchButton = createStyledButton("Cari", new Color(52, 152, 219));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bookSearchField = new JTextField(20);
+        JButton searchButton = new JButton("Cari");
         searchButton.addActionListener(e -> searchBooks());
         
-        searchPanel.add(new JLabel("Cari:"));
-        searchPanel.add(searchField);
+        searchPanel.add(new JLabel("Cari: "));
+        searchPanel.add(bookSearchField);
         searchPanel.add(searchButton);
+        panel.add(searchPanel, BorderLayout.NORTH);
         
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(toolsPanel, BorderLayout.WEST);
-        topPanel.add(searchPanel, BorderLayout.EAST);
+        // Panel tabel
+        bookTableModel = new BookTableModel(new ArrayList<>(mainWindow.getLibrary().getCollection().getBooks()));
+        bookTable = new JTable(bookTableModel);
+        bookTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        bookTable.setRowHeight(25);
+        bookTable.getTableHeader().setReorderingAllowed(false);
         
-        add(topPanel, BorderLayout.CENTER);
+        // Sorter untuk tabel
+        TableRowSorter<BookTableModel> sorter = new TableRowSorter<>(bookTableModel);
+        bookTable.setRowSorter(sorter);
         
-        // Tabel buku
-        String[] columnNames = {"ISBN", "Judul", "Pengarang", "Penerbit", "Tahun", "Format", "Salinan"};
-        bookModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Non-editable table
+        // Listener untuk seleksi buku
+        bookTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                displaySelectedBook();
             }
-        };
+        });
         
-        // Isi data buku
-        refreshBooksTable(library.getCollection().getBooks());
-        
-        booksTable = new JTable(bookModel);
-        booksTable.setFillsViewportHeight(true);
-        booksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
-        // Listener untuk mengaktifkan tombol-tombol aksi
-        booksTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        // Mouse listener untuk double-click
+        bookTable.addMouseListener(new MouseAdapter() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && booksTable.getSelectedRow() != -1) {
-                    boolean hasPermission = currentLibrarian.getPermission() != LibrarianPermission.BASIC;
-                    boolean isAdmin = currentLibrarian.getPermission() == LibrarianPermission.ADMIN;
-                    
-                    addCopyButton.setEnabled(hasPermission);
-                    editButton.setEnabled(hasPermission);
-                    detailButton.setEnabled(true); // Semua bisa lihat detail
-                    deleteButton.setEnabled(isAdmin);
-                } else {
-                    addCopyButton.setEnabled(false);
-                    editButton.setEnabled(false);
-                    detailButton.setEnabled(false);
-                    deleteButton.setEnabled(false);
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    Book book = getSelectedBook();
+                    if (book != null) {
+                        DialogUtils.showBookDetailsDialog(BookPanel.this, book);
+                    }
                 }
             }
         });
         
-        JScrollPane scrollPane = new JScrollPane(booksTable);
-        add(scrollPane, BorderLayout.SOUTH);
-    }
-    
-    /**
-     * Refresh tabel buku
-     * @param bookList Daftar buku yang akan ditampilkan
-     */
-    private void refreshBooksTable(List<Book> bookList) {
-        bookModel.setRowCount(0); // Clear table
+        JScrollPane tableScrollPane = new JScrollPane(bookTable);
+        panel.add(tableScrollPane, BorderLayout.CENTER);
         
-        for (Book book : bookList) {
-            bookModel.addRow(new Object[]{
-                book.getISBN(),
-                book.getTitle(),
-                book.getAuthor(),
-                book.getPublisher(),
-                book.getPublicationYear(),
-                book.getFormat().toString(),
-                book.getItems().size() + " (" + book.getAvailableItems().size() + " tersedia)"
-            });
-        }
+        // Panel tombol
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        addBookButton = new JButton("Tambah Buku");
+        editBookButton = new JButton("Edit Buku");
+        deleteBookButton = new JButton("Hapus Buku");
+        
+        addBookButton.addActionListener(e -> addBook());
+        editBookButton.addActionListener(e -> editBook());
+        deleteBookButton.addActionListener(e -> deleteBook());
+        
+        buttonPanel.add(addBookButton);
+        buttonPanel.add(editBookButton);
+        buttonPanel.add(deleteBookButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        return panel;
     }
     
     /**
-     * Mencari buku berdasarkan kata kunci
+     * Buat panel untuk detail buku
+     */
+    private JPanel createBookDetailsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Detail Buku"));
+        
+        // Panel informasi dasar
+        JPanel infoPanel = new JPanel(new GridLayout(4, 4, 5, 5));
+        
+        // Baris 1
+        infoPanel.add(new JLabel("Judul:", SwingConstants.RIGHT));
+        titleValueLabel = new JLabel("");
+        infoPanel.add(titleValueLabel);
+        
+        infoPanel.add(new JLabel("ISBN:", SwingConstants.RIGHT));
+        isbnValueLabel = new JLabel("");
+        infoPanel.add(isbnValueLabel);
+        
+        // Baris 2
+        infoPanel.add(new JLabel("Pengarang:", SwingConstants.RIGHT));
+        authorValueLabel = new JLabel("");
+        infoPanel.add(authorValueLabel);
+        
+        infoPanel.add(new JLabel("Penerbit:", SwingConstants.RIGHT));
+        publisherValueLabel = new JLabel("");
+        infoPanel.add(publisherValueLabel);
+        
+        // Baris 3
+        infoPanel.add(new JLabel("Tahun:", SwingConstants.RIGHT));
+        yearValueLabel = new JLabel("");
+        infoPanel.add(yearValueLabel);
+        
+        infoPanel.add(new JLabel("Format:", SwingConstants.RIGHT));
+        formatValueLabel = new JLabel("");
+        infoPanel.add(formatValueLabel);
+        
+        // Baris 4
+        infoPanel.add(new JLabel("Bahasa:", SwingConstants.RIGHT));
+        languageValueLabel = new JLabel("");
+        infoPanel.add(languageValueLabel);
+        
+        infoPanel.add(new JLabel("Halaman:", SwingConstants.RIGHT));
+        pagesValueLabel = new JLabel("");
+        infoPanel.add(pagesValueLabel);
+        
+        panel.add(infoPanel, BorderLayout.NORTH);
+        
+        // Panel deskripsi
+        JPanel descPanel = new JPanel(new BorderLayout(5, 5));
+        descPanel.setBorder(BorderFactory.createTitledBorder("Deskripsi"));
+        
+        descriptionArea = new JTextArea(5, 20);
+        descriptionArea.setEditable(false);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descPanel.add(descScrollPane, BorderLayout.CENTER);
+        
+        panel.add(descPanel, BorderLayout.CENTER);
+        
+        return panel;
+    }
+    
+    /**
+     * Buat panel untuk salinan buku
+     */
+    private JPanel createBookItemsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(5, 5));
+        panel.setBorder(BorderFactory.createTitledBorder("Salinan Buku"));
+        
+        // Tabel salinan buku
+        itemsTableModel = new BookItemTableModel(new ArrayList<>());
+        itemsTable = new JTable(itemsTableModel);
+        itemsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        itemsTable.setRowHeight(25);
+        itemsTable.getTableHeader().setReorderingAllowed(false);
+        
+        JScrollPane tableScrollPane = new JScrollPane(itemsTable);
+        panel.add(tableScrollPane, BorderLayout.CENTER);
+        
+        // Panel tombol
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        addItemButton = new JButton("Tambah Salinan");
+        editItemButton = new JButton("Edit Salinan");
+        deleteItemButton = new JButton("Hapus Salinan");
+        
+        addItemButton.addActionListener(e -> addBookItem());
+        editItemButton.addActionListener(e -> editBookItem());
+        deleteItemButton.addActionListener(e -> deleteBookItem());
+        
+        buttonPanel.add(addItemButton);
+        buttonPanel.add(editItemButton);
+        buttonPanel.add(deleteItemButton);
+        panel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        return panel;
+    }
+    
+    /**
+     * Refresh data panel
+     */
+    public void refreshData() {
+        bookTableModel.setBooks(new ArrayList<>(mainWindow.getLibrary().getCollection().getBooks()));
+        updateButtonStates();
+        clearBookDetails();
+    }
+    
+    /**
+     * Update status tombol berdasarkan hak akses dan seleksi
+     */
+    private void updateButtonStates() {
+        boolean isBasic = mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC;
+        boolean isAdmin = mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.ADMIN;
+        boolean bookSelected = bookTable.getSelectedRow() != -1;
+        boolean itemSelected = itemsTable.getSelectedRow() != -1;
+        
+        // Tombol buku
+        addBookButton.setEnabled(!isBasic);
+        editBookButton.setEnabled(!isBasic && bookSelected);
+        deleteBookButton.setEnabled(isAdmin && bookSelected);
+        
+        // Tombol salinan buku
+        addItemButton.setEnabled(!isBasic && bookSelected);
+        editItemButton.setEnabled(!isBasic && itemSelected);
+        deleteItemButton.setEnabled(!isBasic && itemSelected);
+    }
+    
+    /**
+     * Cari buku berdasarkan keyword
      */
     private void searchBooks() {
-        String keyword = searchField.getText().trim().toLowerCase();
+        String keyword = bookSearchField.getText().trim().toLowerCase();
         if (keyword.isEmpty()) {
-            refreshBooksTable(library.getCollection().getBooks());
+            refreshData();
             return;
         }
         
-        List<Book> results = new ArrayList<>();
-        for (Book book : library.getCollection().getBooks()) {
+        ArrayList<Book> filteredList = new ArrayList<>();
+        for (Book book : mainWindow.getLibrary().getCollection().getBooks()) {
             if (book.getTitle().toLowerCase().contains(keyword) ||
                 book.getAuthor().toLowerCase().contains(keyword) ||
-                book.getISBN().toLowerCase().contains(keyword)) {
-                results.add(book);
+                book.getISBN().toLowerCase().contains(keyword) ||
+                book.getPublisher().toLowerCase().contains(keyword)) {
+                filteredList.add(book);
             }
         }
         
-        refreshBooksTable(results);
+        bookTableModel.setBooks(filteredList);
+        clearBookDetails();
     }
     
     /**
-     * Menampilkan dialog untuk menambah buku baru
+     * Tambah buku baru
      */
-    private void showAddBookDialog() {
-        JDialog dialog = new JDialog((Window) getParent(), "Tambah Buku Baru", true);
-        dialog.setSize(500, 600);
-        dialog.setLocationRelativeTo(this);
-        
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Book info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("ISBN:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField isbnField = new JTextField(15);
-        panel.add(isbnField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Judul:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField titleField = new JTextField(15);
-        panel.add(titleField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Pengarang:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField authorField = new JTextField(15);
-        panel.add(authorField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Penerbit:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField publisherField = new JTextField(15);
-        panel.add(publisherField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Tahun Terbit:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField yearField = new JTextField(15);
-        panel.add(yearField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Deskripsi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JTextArea descriptionArea = new JTextArea(3, 15);
-        descriptionArea.setLineWrap(true);
-        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
-        panel.add(descScrollPane, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panel.add(new JLabel("Jumlah Halaman:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 6;
-        JTextField pagesField = new JTextField(15);
-        panel.add(pagesField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        panel.add(new JLabel("Format:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 7;
-        String[] formats = {"HARDCOVER", "PAPERBACK", "EBOOK", "AUDIOBOOK"};
-        JComboBox<String> formatCombo = new JComboBox<>(formats);
-        panel.add(formatCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Bahasa:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 8;
-        String[] languages = {"INDONESIAN", "ENGLISH", "JAPANESE", "FRENCH", "GERMAN", "OTHER"};
-        JComboBox<String> languageCombo = new JComboBox<>(languages);
-        panel.add(languageCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        panel.add(new JLabel("Kategori:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 9;
-        JComboBox<String> categoryCombo = new JComboBox<>();
-        categoryCombo.addItem("-- Pilih Kategori --");
-        for (BookCategory category : library.getCollection().getCategories()) {
-            categoryCombo.addItem(category.getName());
+    private void addBook() {
+        if (mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menambah buku!", "Akses Ditolak");
+            return;
         }
-        panel.add(categoryCombo, gbc);
         
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 10;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
+        // Panel form untuk input data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JTextField isbnField = new JTextField(20);
+        JTextField titleField = new JTextField(20);
+        JTextField authorField = new JTextField(20);
+        JTextField publisherField = new JTextField(20);
+        JTextField yearField = new JTextField(20);
+        JTextField pagesField = new JTextField(20);
+        JTextArea descriptionArea = new JTextArea(5, 20);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
         
-        JButton cancelButton = new JButton("Batal");
-        cancelButton.addActionListener(e -> dialog.dispose());
+        JComboBox<BookFormat> formatCombo = new JComboBox<>(BookFormat.values());
+        JComboBox<Language> languageCombo = new JComboBox<>(Language.values());
         
-        JButton saveButton = createStyledButton("Simpan", new Color(39, 174, 96));
-        saveButton.addActionListener(e -> {
+        formPanel.add(new JLabel("ISBN:"));
+        formPanel.add(isbnField);
+        formPanel.add(new JLabel("Judul:"));
+        formPanel.add(titleField);
+        formPanel.add(new JLabel("Pengarang:"));
+        formPanel.add(authorField);
+        formPanel.add(new JLabel("Penerbit:"));
+        formPanel.add(publisherField);
+        formPanel.add(new JLabel("Tahun Terbit:"));
+        formPanel.add(yearField);
+        formPanel.add(new JLabel("Jumlah Halaman:"));
+        formPanel.add(pagesField);
+        formPanel.add(new JLabel("Format:"));
+        formPanel.add(formatCombo);
+        formPanel.add(new JLabel("Bahasa:"));
+        formPanel.add(languageCombo);
+        
+        JPanel completePanel = new JPanel(new BorderLayout(5, 5));
+        completePanel.add(formPanel, BorderLayout.NORTH);
+        
+        JPanel descPanel = new JPanel(new BorderLayout(5, 5));
+        descPanel.setBorder(BorderFactory.createTitledBorder("Deskripsi"));
+        descPanel.add(descScrollPane, BorderLayout.CENTER);
+        
+        completePanel.add(descPanel, BorderLayout.CENTER);
+        
+        // Panel untuk kategori
+        JPanel categoryPanel = new JPanel(new BorderLayout(5, 5));
+        categoryPanel.setBorder(BorderFactory.createTitledBorder("Kategori"));
+        
+        List<BookCategory> allCategories = mainWindow.getLibrary().getCollection().getCategories();
+        JList<BookCategory> categoryList = new JList<>(allCategories.toArray(new BookCategory[0]));
+        categoryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        
+        categoryPanel.add(new JScrollPane(categoryList), BorderLayout.CENTER);
+        completePanel.add(categoryPanel, BorderLayout.SOUTH);
+        
+        completePanel.setPreferredSize(new Dimension(500, 600));
+        
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, completePanel, "Tambah Buku", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
             try {
                 // Validasi input
-                if (isbnField.getText().isEmpty() || titleField.getText().isEmpty() || 
-                    authorField.getText().isEmpty() || publisherField.getText().isEmpty() ||
-                    yearField.getText().isEmpty() || pagesField.getText().isEmpty()) {
-                    showErrorMessage("Semua field harus diisi!", "Error");
-                    return;
+                if (isbnField.getText().trim().isEmpty() || 
+                    titleField.getText().trim().isEmpty() ||
+                    authorField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("ISBN, Judul, dan Pengarang tidak boleh kosong!");
                 }
                 
-                // Cek duplikat ISBN
-                Map<String, Book> books = parentFrame.getBooks();
-                if (books.containsKey(isbnField.getText().trim())) {
-                    showErrorMessage("Buku dengan ISBN tersebut sudah ada!", "Error");
-                    return;
-                }
-                
-                // Parse input numerik
-                int year, pages;
+                int year = 0;
                 try {
                     year = Integer.parseInt(yearField.getText().trim());
-                    pages = Integer.parseInt(pagesField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    showErrorMessage("Tahun dan jumlah halaman harus berupa angka!", "Error");
-                    return;
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Tahun harus berupa angka!");
                 }
                 
-                // Buat buku baru
-                BookFormat format = BookFormat.valueOf((String) formatCombo.getSelectedItem());
-                Language language = Language.valueOf((String) languageCombo.getSelectedItem());
+                int pages = 0;
+                try {
+                    pages = Integer.parseInt(pagesField.getText().trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Jumlah halaman harus berupa angka!");
+                }
                 
+                // Buat objek Book
                 Book book = new Book(
                     isbnField.getText().trim(),
                     titleField.getText().trim(),
@@ -340,65 +440,46 @@ public class BookPanel extends BasePanel {
                     year,
                     descriptionArea.getText().trim(),
                     pages,
-                    format,
-                    language
+                    (BookFormat) formatCombo.getSelectedItem(),
+                    (Language) languageCombo.getSelectedItem()
                 );
                 
                 // Tambahkan ke library
-                library.addBook(book);
-                books.put(book.getISBN(), book);
+                mainWindow.addBook(book);
                 
-                // Tambahkan ke kategori jika dipilih
-                if (categoryCombo.getSelectedIndex() > 0) {
-                    String categoryName = (String) categoryCombo.getSelectedItem();
-                    BookCategory selectedCategory = parentFrame.getCategories().get(categoryName);
-                    if (selectedCategory != null) {
-                        library.addBookToCategory(book, selectedCategory);
+                // Tambahkan ke kategori yang dipilih
+                int[] selectedIndices = categoryList.getSelectedIndices();
+                for (int index : selectedIndices) {
+                    if (index >= 0 && index < allCategories.size()) {
+                        BookCategory category = allCategories.get(index);
+                        mainWindow.addBookToCategory(book, category);
                     }
                 }
                 
-                dialog.dispose();
-                showInfoMessage("Buku berhasil ditambahkan!", "Sukses");
+                refreshData();
                 
-                // Tanyakan apakah ingin menambahkan salinan buku
-                int addCopy = JOptionPane.showConfirmDialog(
+                GUIUtils.infoDialog(this, "Buku berhasil ditambahkan!", "Sukses");
+                
+                // Tanya user apakah ingin menambahkan salinan buku
+                boolean addCopy = GUIUtils.confirmDialog(
                     this, 
-                    "Apakah Anda ingin menambahkan salinan buku ini sekarang?",
-                    "Tambah Salinan", 
-                    JOptionPane.YES_NO_OPTION);
+                    "Apakah Anda ingin menambahkan salinan buku?", 
+                    "Tambah Salinan");
                 
-                if (addCopy == JOptionPane.YES_OPTION) {
-                    showAddBookCopyDialog(book);
+                if (addCopy) {
+                    // Select the newly added book
+                    for (int i = 0; i < bookTableModel.getRowCount(); i++) {
+                        if (bookTableModel.getBookAt(i).getISBN().equals(book.getISBN())) {
+                            bookTable.setRowSelectionInterval(i, i);
+                            displaySelectedBook();
+                            break;
+                        }
+                    }
+                    
+                    addBookItem();
                 }
-                
-                // Refresh tabel buku
-                refreshBooksTable(library.getCollection().getBooks());
-                
             } catch (Exception ex) {
-                showErrorMessage("Error: " + ex.getMessage(), "Error");
-            }
-        });
-        
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        
-        panel.add(buttonPanel, gbc);
-        
-        JScrollPane dialogScrollPane = new JScrollPane(panel);
-        dialog.add(dialogScrollPane);
-        dialog.setVisible(true);
-    }
-    
-    /**
-     * Tambah salinan ke buku yang dipilih
-     */
-    private void addCopyToSelectedBook() {
-        int row = booksTable.getSelectedRow();
-        if (row != -1) {
-            String isbn = (String) booksTable.getValueAt(row, 0);
-            Book selectedBook = parentFrame.getBooks().get(isbn);
-            if (selectedBook != null) {
-                showAddBookCopyDialog(selectedBook);
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
             }
         }
     }
@@ -406,27 +487,149 @@ public class BookPanel extends BasePanel {
     /**
      * Edit buku yang dipilih
      */
-    private void editSelectedBook() {
-        int row = booksTable.getSelectedRow();
-        if (row != -1) {
-            String isbn = (String) booksTable.getValueAt(row, 0);
-            Book selectedBook = parentFrame.getBooks().get(isbn);
-            if (selectedBook != null) {
-                showEditBookDialog(selectedBook);
+    private void editBook() {
+        if (mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk mengubah buku!", "Akses Ditolak");
+            return;
+        }
+        
+        Book book = getSelectedBook();
+        if (book == null) {
+            GUIUtils.errorDialog(this, "Pilih buku yang akan diubah!", "Tidak Ada Buku Dipilih");
+            return;
+        }
+        
+        // Panel form untuk edit data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        
+        JTextField titleField = new JTextField(book.getTitle(), 20);
+        JTextField authorField = new JTextField(book.getAuthor(), 20);
+        JTextField publisherField = new JTextField(book.getPublisher(), 20);
+        JTextField yearField = new JTextField(String.valueOf(book.getPublicationYear()), 20);
+        JTextField pagesField = new JTextField(String.valueOf(book.getNumberOfPages()), 20);
+        
+        JTextArea descriptionArea = new JTextArea(book.getDescription(), 5, 20);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        
+        JComboBox<BookFormat> formatCombo = new JComboBox<>(BookFormat.values());
+        formatCombo.setSelectedItem(book.getFormat());
+        
+        JComboBox<Language> languageCombo = new JComboBox<>(Language.values());
+        languageCombo.setSelectedItem(book.getLanguage());
+        
+        formPanel.add(new JLabel("ISBN:"));
+        formPanel.add(new JLabel(book.getISBN()));
+        formPanel.add(new JLabel("Judul:"));
+        formPanel.add(titleField);
+        formPanel.add(new JLabel("Pengarang:"));
+        formPanel.add(authorField);
+        formPanel.add(new JLabel("Penerbit:"));
+        formPanel.add(publisherField);
+        formPanel.add(new JLabel("Tahun Terbit:"));
+        formPanel.add(yearField);
+        formPanel.add(new JLabel("Jumlah Halaman:"));
+        formPanel.add(pagesField);
+        formPanel.add(new JLabel("Format:"));
+        formPanel.add(formatCombo);
+        formPanel.add(new JLabel("Bahasa:"));
+        formPanel.add(languageCombo);
+        
+        JPanel completePanel = new JPanel(new BorderLayout(5, 5));
+        completePanel.add(formPanel, BorderLayout.NORTH);
+        
+        JPanel descPanel = new JPanel(new BorderLayout(5, 5));
+        descPanel.setBorder(BorderFactory.createTitledBorder("Deskripsi"));
+        descPanel.add(descScrollPane, BorderLayout.CENTER);
+        
+        completePanel.add(descPanel, BorderLayout.CENTER);
+        
+        // Panel untuk kategori
+        JPanel categoryPanel = new JPanel(new BorderLayout(5, 5));
+        categoryPanel.setBorder(BorderFactory.createTitledBorder("Kategori"));
+        
+        List<BookCategory> allCategories = mainWindow.getLibrary().getCollection().getCategories();
+        JList<BookCategory> categoryList = new JList<>(allCategories.toArray(new BookCategory[0]));
+        categoryList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        
+        // Pre-select existing categories
+        List<Integer> selectedIndices = new ArrayList<>();
+        for (int i = 0; i < allCategories.size(); i++) {
+            if (book.getCategories().contains(allCategories.get(i))) {
+                selectedIndices.add(i);
             }
         }
-    }
-    
-    /**
-     * Lihat detail buku yang dipilih
-     */
-    private void viewSelectedBookDetails() {
-        int row = booksTable.getSelectedRow();
-        if (row != -1) {
-            String isbn = (String) booksTable.getValueAt(row, 0);
-            Book selectedBook = parentFrame.getBooks().get(isbn);
-            if (selectedBook != null) {
-                showBookDetailsDialog(selectedBook);
+        
+        int[] indices = new int[selectedIndices.size()];
+        for (int i = 0; i < selectedIndices.size(); i++) {
+            indices[i] = selectedIndices.get(i);
+        }
+        categoryList.setSelectedIndices(indices);
+        
+        categoryPanel.add(new JScrollPane(categoryList), BorderLayout.CENTER);
+        completePanel.add(categoryPanel, BorderLayout.SOUTH);
+        
+        completePanel.setPreferredSize(new Dimension(500, 600));
+        
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, completePanel, "Edit Buku", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                // Validasi input
+                if (titleField.getText().trim().isEmpty() ||
+                    authorField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Judul dan Pengarang tidak boleh kosong!");
+                }
+                
+                int year = 0;
+                try {
+                    year = Integer.parseInt(yearField.getText().trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Tahun harus berupa angka!");
+                }
+                
+                int pages = 0;
+                try {
+                    pages = Integer.parseInt(pagesField.getText().trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Jumlah halaman harus berupa angka!");
+                }
+                
+                // Update data
+                book.setTitle(titleField.getText().trim());
+                book.setAuthor(authorField.getText().trim());
+                book.setPublisher(publisherField.getText().trim());
+                book.setPublicationYear(year);
+                book.setNumberOfPages(pages);
+                book.setDescription(descriptionArea.getText().trim());
+                book.setFormat((BookFormat) formatCombo.getSelectedItem());
+                book.setLanguage((Language) languageCombo.getSelectedItem());
+                
+                // Update kategori
+                // Hapus semua kategori
+                for (BookCategory category : new ArrayList<>(book.getCategories())) {
+                    category.removeBook(book);
+                }
+                
+                // Tambahkan kategori yang dipilih
+                int[] selectedNewIndices = categoryList.getSelectedIndices();
+                for (int index : selectedNewIndices) {
+                    if (index >= 0 && index < allCategories.size()) {
+                        BookCategory category = allCategories.get(index);
+                        mainWindow.addBookToCategory(book, category);
+                    }
+                }
+                
+                refreshData();
+                displaySelectedBook();
+                
+                GUIUtils.infoDialog(this, "Buku berhasil diubah!", "Sukses");
+            } catch (Exception ex) {
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
             }
         }
     }
@@ -434,302 +637,299 @@ public class BookPanel extends BasePanel {
     /**
      * Hapus buku yang dipilih
      */
-    private void deleteSelectedBook() {
-        int row = booksTable.getSelectedRow();
-        if (row != -1) {
-            String isbn = (String) booksTable.getValueAt(row, 0);
-            Book selectedBook = parentFrame.getBooks().get(isbn);
-            
-            if (selectedBook != null) {
-                boolean confirm = showConfirmDialog(
-                    "Apakah Anda yakin ingin menghapus buku " + selectedBook.getTitle() + "?",
-                    "Konfirmasi Hapus");
-                
-                if (confirm) {
-                    library.getCollection().removeBook(selectedBook);
-                    parentFrame.getBooks().remove(selectedBook.getISBN());
-                    refreshBooksTable(library.getCollection().getBooks());
-                    showInfoMessage("Buku berhasil dihapus.", "Sukses");
-                }
+    private void deleteBook() {
+        if (mainWindow.getCurrentLibrarian().getPermission() != LibrarianPermission.ADMIN) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menghapus buku!", "Akses Ditolak");
+            return;
+        }
+        
+        Book book = getSelectedBook();
+        if (book == null) {
+            GUIUtils.errorDialog(this, "Pilih buku yang akan dihapus!", "Tidak Ada Buku Dipilih");
+            return;
+        }
+        
+        // Cek apakah buku memiliki salinan yang dipinjam
+        boolean hasBorrowedItems = false;
+        for (BookItem item : book.getItems()) {
+            if (!item.isAvailable()) {
+                hasBorrowedItems = true;
+                break;
             }
         }
-    }
-    
-    private void showEditBookDialog(Book book) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Buku", true);
-        dialog.setSize(500, 600);
-        dialog.setLocationRelativeTo(this);
         
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-        
-        // Book info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("ISBN:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField isbnField = new JTextField(book.getISBN(), 15);
-        isbnField.setEditable(false);
-        panel.add(isbnField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Judul:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField titleField = new JTextField(book.getTitle(), 15);
-        panel.add(titleField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Pengarang:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField authorField = new JTextField(book.getAuthor(), 15);
-        panel.add(authorField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Penerbit:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField publisherField = new JTextField(book.getPublisher(), 15);
-        panel.add(publisherField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Tahun Terbit:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField yearField = new JTextField(String.valueOf(book.getPublicationYear()), 15);
-        panel.add(yearField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Deskripsi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JTextArea descriptionArea = new JTextArea(book.getDescription(), 3, 15);
-        descriptionArea.setLineWrap(true);
-        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
-        panel.add(descScrollPane, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panel.add(new JLabel("Jumlah Halaman:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 6;
-        JTextField pagesField = new JTextField(String.valueOf(book.getPages()), 15);
-        panel.add(pagesField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        panel.add(new JLabel("Format:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 7;
-        String[] formats = {"HARDCOVER", "PAPERBACK", "EBOOK", "AUDIOBOOK"};
-        JComboBox<String> formatCombo = new JComboBox<>(formats);
-        formatCombo.setSelectedItem(book.getFormat().toString());
-        panel.add(formatCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Bahasa:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 8;
-        String[] languages = {"INDONESIAN", "ENGLISH", "JAPANESE", "FRENCH", "GERMAN", "OTHER"};
-        JComboBox<String> languageCombo = new JComboBox<>(languages);
-        languageCombo.setSelectedItem(book.getLanguage().toString());
-        panel.add(languageCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        panel.add(new JLabel("Kategori:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 9;
-        JComboBox<String> categoryCombo = new JComboBox<>();
-        categoryCombo.addItem("-- Pilih Kategori --");
-        for (BookCategory category : library.getCollection().getCategories()) {
-            categoryCombo.addItem(category.getName());
+        if (hasBorrowedItems) {
+            GUIUtils.errorDialog(this, "Buku tidak dapat dihapus karena memiliki salinan yang sedang dipinjam!", "Tidak Dapat Menghapus");
+            return;
         }
-        panel.add(categoryCombo, gbc);
         
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 10;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
+        boolean confirm = GUIUtils.confirmDialog(
+            this, 
+            "Apakah Anda yakin ingin menghapus buku '" + book.getTitle() + "'? Semua salinan buku juga akan dihapus.", 
+            "Konfirmasi Hapus");
         
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton cancelButton = new JButton("Batal");
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        JButton saveButton = createStyledButton("Simpan", new Color(39, 174, 96));
-        saveButton.addActionListener(e -> {
-            try {
-                // Validasi input
-                if (titleField.getText().isEmpty() || authorField.getText().isEmpty() || 
-                    publisherField.getText().isEmpty() || yearField.getText().isEmpty() || 
-                    pagesField.getText().isEmpty()) {
-                    showErrorMessage("Semua field harus diisi!", "Error");
-                    return;
-                }
-                
-                // Parse input numerik
-                int year, pages;
-                try {
-                    year = Integer.parseInt(yearField.getText().trim());
-                    pages = Integer.parseInt(pagesField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    showErrorMessage("Tahun dan jumlah halaman harus berupa angka!", "Error");
-                    return;
-                }
-                
-                // Update buku
-                book.setTitle(titleField.getText().trim());
-                book.setAuthor(authorField.getText().trim());
-                book.setPublisher(publisherField.getText().trim());
-                book.setPublicationYear(year);
-                book.setDescription(descriptionArea.getText().trim());
-                book.setPages(pages);
-                book.setFormat(BookFormat.valueOf((String) formatCombo.getSelectedItem()));
-                book.setLanguage(Language.valueOf((String) languageCombo.getSelectedItem()));
-                
-                // Update kategori jika dipilih
-                if (categoryCombo.getSelectedIndex() > 0) {
-                    String categoryName = (String) categoryCombo.getSelectedItem();
-                    BookCategory selectedCategory = parentFrame.getCategories().get(categoryName);
-                    if (selectedCategory != null) {
-                        library.addBookToCategory(book, selectedCategory);
-                    }
-                }
-                
-                dialog.dispose();
-                showInfoMessage("Buku berhasil diperbarui!", "Sukses");
-                
-                // Refresh tabel buku
-                refreshBooksTable(library.getCollection().getBooks());
-                
-            } catch (Exception ex) {
-                showErrorMessage("Error: " + ex.getMessage(), "Error");
-            }
-        });
-        
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        
-        panel.add(buttonPanel, gbc);
-        
-        JScrollPane dialogScrollPane = new JScrollPane(panel);
-        dialog.add(dialogScrollPane);
-        dialog.setVisible(true);
+        if (confirm) {
+            mainWindow.removeBook(book);
+            refreshData();
+            GUIUtils.infoDialog(this, "Buku berhasil dihapus!", "Sukses");
+        }
     }
     
     /**
-     * Menampilkan dialog untuk menambah salinan buku
-     * @param book Buku yang akan ditambah salinannya
+     * Tambah salinan buku
      */
-    private void showAddBookCopyDialog(Book book) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Salinan Buku", true);
-        dialog.setSize(400, 350);
-        dialog.setLocationRelativeTo(this);
+    private void addBookItem() {
+        if (mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menambah salinan buku!", "Akses Ditolak");
+            return;
+        }
         
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
+        Book book = getSelectedBook();
+        if (book == null) {
+            GUIUtils.errorDialog(this, "Pilih buku terlebih dahulu!", "Tidak Ada Buku Dipilih");
+            return;
+        }
         
-        // Book info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("Buku:"), gbc);
+        // Panel form untuk input data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField bookField = new JTextField(book.getTitle(), 15);
-        bookField.setEditable(false);
-        panel.add(bookField, gbc);
+        JTextField barcodeField = new JTextField(20);
+        JTextField locationField = new JTextField(20);
+        JTextField priceField = new JTextField(20);
+        JCheckBox referenceOnlyCheckbox = new JCheckBox("Hanya untuk referensi");
         
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("ISBN:"), gbc);
+        formPanel.add(new JLabel("Barcode:"));
+        formPanel.add(barcodeField);
+        formPanel.add(new JLabel("Lokasi:"));
+        formPanel.add(locationField);
+        formPanel.add(new JLabel("Harga:"));
+        formPanel.add(priceField);
+        formPanel.add(new JLabel(""));
+        formPanel.add(referenceOnlyCheckbox);
         
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField isbnField = new JTextField(book.getISBN(), 15);
-        isbnField.setEditable(false);
-        panel.add(isbnField, gbc);
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, formPanel, "Tambah Salinan Buku", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         
-        // Copy info
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Kode Barcode:"), gbc);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                // Validasi input
+                String barcode = barcodeField.getText().trim();
+                if (barcode.isEmpty()) {
+                    throw new IllegalArgumentException("Barcode tidak boleh kosong!");
+                }
+                
+                // Cek apakah barcode sudah digunakan
+                if (mainWindow.getBookItems().containsKey(barcode)) {
+                    throw new IllegalArgumentException("Barcode sudah digunakan oleh salinan buku lain!");
+                }
+                
+                String location = locationField.getText().trim();
+                
+                double price = 0.0;
+                try {
+                    if (!priceField.getText().trim().isEmpty()) {
+                        price = Double.parseDouble(priceField.getText().trim());
+                    }
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Harga harus berupa angka!");
+                }
+                
+                boolean referenceOnly = referenceOnlyCheckbox.isSelected();
+                
+                // Buat salinan buku
+                BookItem bookItem = mainWindow.addBookItem(book, barcode);
+                bookItem.setLocation(location);
+                bookItem.setPrice(price);
+                bookItem.setReferenceOnly(referenceOnly);
+                
+                refreshBookItems();
+                
+                GUIUtils.infoDialog(this, "Salinan buku berhasil ditambahkan!", "Sukses");
+            } catch (Exception ex) {
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
+            }
+        }
+    }
+    
+    /**
+     * Edit salinan buku yang dipilih
+     */
+    private void editBookItem() {
+        if (mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk mengubah salinan buku!", "Akses Ditolak");
+            return;
+        }
         
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField barcodeField = new JTextField(15);
-        panel.add(barcodeField, gbc);
+        BookItem bookItem = getSelectedBookItem();
+        if (bookItem == null) {
+            GUIUtils.errorDialog(this, "Pilih salinan buku yang akan diubah!", "Tidak Ada Salinan Dipilih");
+            return;
+        }
         
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Harga:"), gbc);
+        // Panel form untuk edit data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField priceField = new JTextField("0.0", 15);
-        panel.add(priceField, gbc);
+        JTextField locationField = new JTextField(bookItem.getLocation(), 20);
+        JTextField priceField = new JTextField(String.valueOf(bookItem.getPrice()), 20);
+        JCheckBox referenceOnlyCheckbox = new JCheckBox("Hanya untuk referensi", bookItem.isReferenceOnly());
         
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Lokasi:"), gbc);
+        formPanel.add(new JLabel("Barcode:"));
+        formPanel.add(new JLabel(bookItem.getBarcode()));
+        formPanel.add(new JLabel("Status:"));
+        formPanel.add(new JLabel(bookItem.getStatus().toString()));
+        formPanel.add(new JLabel("Lokasi:"));
+        formPanel.add(locationField);
+        formPanel.add(new JLabel("Harga:"));
+        formPanel.add(priceField);
+        formPanel.add(new JLabel(""));
+        formPanel.add(referenceOnlyCheckbox);
         
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField locationField = new JTextField(15);
-        panel.add(locationField, gbc);
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, formPanel, "Edit Salinan Buku", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("Hanya Referensi:"), gbc);
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                // Validasi input
+                double price = 0.0;
+                try {
+                    if (!priceField.getText().trim().isEmpty()) {
+                        price = Double.parseDouble(priceField.getText().trim());
+                    }
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Harga harus berupa angka!");
+                }
+                
+                // Update data
+                bookItem.setLocation(locationField.getText().trim());
+                bookItem.setPrice(price);
+                bookItem.setReferenceOnly(referenceOnlyCheckbox.isSelected());
+                
+                refreshBookItems();
+                
+                GUIUtils.infoDialog(this, "Salinan buku berhasil diubah!", "Sukses");
+            } catch (Exception ex) {
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
+            }
+        }
+    }
+    
+    /**
+     * Hapus salinan buku yang dipilih
+     */
+    private void deleteBookItem() {
+        if (mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menghapus salinan buku!", "Akses Ditolak");
+            return;
+        }
         
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JCheckBox referenceOnlyCheck = new JCheckBox();
-        panel.add(referenceOnlyCheck, gbc);
+        BookItem bookItem = getSelectedBookItem();
+        if (bookItem == null) {
+            GUIUtils.errorDialog(this, "Pilih salinan buku yang akan dihapus!", "Tidak Ada Salinan Dipilih");
+            return;
+        }
         
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
+        // Cek apakah salinan buku sedang dipinjam
+        if (!bookItem.isAvailable()) {
+            GUIUtils.errorDialog(this, "Salinan buku tidak dapat dihapus karena sedang dipinjam!", "Tidak Dapat Menghapus");
+            return;
+        }
         
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        boolean confirm = GUIUtils.confirmDialog(
+            this, 
+            "Apakah Anda yakin ingin menghapus salinan buku dengan barcode " + bookItem.getBarcode() + "?", 
+            "Konfirmasi Hapus");
         
-        JButton closeButton = new JButton("Tutup");
-        closeButton.addActionListener(e -> dialog.dispose());
+        if (confirm) {
+            Book book = bookItem.getBook();
+            book.removeBookItem(bookItem);
+            mainWindow.getBookItems().remove(bookItem.getBarcode());
+            refreshBookItems();
+            GUIUtils.infoDialog(this, "Salinan buku berhasil dihapus!", "Sukses");
+        }
+    }
+    
+    /**
+     * Mendapatkan buku yang dipilih di tabel
+     */
+    private Book getSelectedBook() {
+        int selectedRow = bookTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int modelRow = bookTable.convertRowIndexToModel(selectedRow);
+            return bookTableModel.getBookAt(modelRow);
+        }
+        return null;
+    }
+    
+    /**
+     * Mendapatkan salinan buku yang dipilih di tabel
+     */
+    private BookItem getSelectedBookItem() {
+        int selectedRow = itemsTable.getSelectedRow();
+        if (selectedRow != -1) {
+            int modelRow = itemsTable.convertRowIndexToModel(selectedRow);
+            return itemsTableModel.getBookItemAt(modelRow);
+        }
+        return null;
+    }
+    
+    /**
+     * Menampilkan detail buku yang dipilih
+     */
+    private void displaySelectedBook() {
+        Book book = getSelectedBook();
+        if (book != null) {
+            // Update detail buku
+            titleValueLabel.setText(book.getTitle());
+            authorValueLabel.setText(book.getAuthor());
+            publisherValueLabel.setText(book.getPublisher());
+            yearValueLabel.setText(String.valueOf(book.getPublicationYear()));
+            isbnValueLabel.setText(book.getISBN());
+            formatValueLabel.setText(book.getFormat().toString());
+            languageValueLabel.setText(book.getLanguage().toString());
+            pagesValueLabel.setText(String.valueOf(book.getNumberOfPages()));
+            descriptionArea.setText(book.getDescription());
+            
+            // Update tabel salinan buku
+            refreshBookItems();
+        } else {
+            clearBookDetails();
+        }
         
-        buttonPanel.add(closeButton);
+        updateButtonStates();
+    }
+    
+    /**
+     * Refresh tabel salinan buku
+     */
+    private void refreshBookItems() {
+        Book book = getSelectedBook();
+        if (book != null) {
+            itemsTableModel.setBookItems(new ArrayList<>(book.getItems()));
+        } else {
+            itemsTableModel.setBookItems(new ArrayList<>());
+        }
+        updateButtonStates();
+    }
+    
+    /**
+     * Clear detail buku
+     */
+    private void clearBookDetails() {
+        titleValueLabel.setText("");
+        authorValueLabel.setText("");
+        publisherValueLabel.setText("");
+        yearValueLabel.setText("");
+        isbnValueLabel.setText("");
+        formatValueLabel.setText("");
+        languageValueLabel.setText("");
+        pagesValueLabel.setText("");
+        descriptionArea.setText("");
         
-        panel.add(buttonPanel, gbc);
-        
-        JScrollPane dialogScrollPane = new JScrollPane(panel);
-        dialog.add(dialogScrollPane);
-        dialog.setVisible(true);
+        itemsTableModel.setBookItems(new ArrayList<>());
+        updateButtonStates();
     }
 }

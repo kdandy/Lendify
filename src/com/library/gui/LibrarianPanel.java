@@ -1,309 +1,332 @@
 package com.library.gui;
 
-import com.library.enums.*;
-import com.library.model.*;
+import com.library.enums.LibrarianPermission;
+import com.library.gui.utils.GUIUtils;
+import com.library.gui.utils.TableModels.LibrarianTableModel;
+import com.library.model.Librarian;
+import com.library.model.Person;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.Dialog.ModalityType;
+import java.awt.event.*;
+import java.util.ArrayList;
 
 /**
- * Panel untuk manajemen pustakawan
+ * Panel untuk kelola pustakawan
  */
-public class LibrarianPanel extends BasePanel {
-    private DefaultTableModel librarianModel;
-    private JTable librariansTable;
+public class LibrarianPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private LendifyGUI mainWindow;
+    private JTable librarianTable;
+    private LibrarianTableModel tableModel;
     private JButton addButton;
     private JButton editButton;
     private JButton deleteButton;
-
+    private JButton backButton;
+    private JTextField searchField;
+    
     /**
-     * Konstruktor
-     * @param parentFrame Frame parent (LendifyGUI)
+     * Constructor untuk LibrarianPanel
      */
-    public LibrarianPanel(LendifyGUI parentFrame) {
-        super(parentFrame);
+    public LibrarianPanel(LendifyGUI mainWindow) {
+        this.mainWindow = mainWindow;
+        setupUI();
     }
     
-    @Override
-    protected void initComponents() {
-        // Tambahkan judul panel
-        JLabel titleLabel = createTitleLabel("Kelola Pustakawan");
-        add(titleLabel, BorderLayout.NORTH);
+    /**
+     * Setup komponen UI
+     */
+    private void setupUI() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Panel tools dengan tombol-tombol aksi
-        JPanel toolsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Panel judul
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Kelola Pustakawan", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
         
-        addButton = createStyledButton("Tambah Pustakawan", new Color(39, 174, 96));
-        addButton.addActionListener(e -> showAddLibrarianDialog());
+        // Panel pencarian
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchField = new JTextField(20);
+        JButton searchButton = new JButton("Cari");
+        searchButton.addActionListener(e -> searchLibrarians());
         
-        editButton = createStyledButton("Edit Pustakawan", new Color(41, 128, 185));
-        editButton.setEnabled(false); // Diaktifkan ketika ada pustakawan yang dipilih
-        editButton.addActionListener(e -> editSelectedLibrarian());
+        searchPanel.add(new JLabel("Cari: "));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
         
-        deleteButton = createStyledButton("Hapus Pustakawan", new Color(231, 76, 60));
-        deleteButton.setEnabled(false); // Diaktifkan ketika ada pustakawan yang dipilih
-        deleteButton.addActionListener(e -> deleteSelectedLibrarian());
+        titlePanel.add(searchPanel, BorderLayout.EAST);
+        add(titlePanel, BorderLayout.NORTH);
         
-        // Sesuaikan status tombol berdasarkan izin pustakawan saat ini
-        if (currentLibrarian.getPermission() != LibrarianPermission.ADMIN) {
-            addButton.setEnabled(false);
-            editButton.setEnabled(false);
-            deleteButton.setEnabled(false);
-        }        
+        // Panel tabel
+        tableModel = new LibrarianTableModel(new ArrayList<>(mainWindow.getLibrary().getLibrarians()));
+        librarianTable = new JTable(tableModel);
+        librarianTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        librarianTable.setRowHeight(25);
+        librarianTable.getTableHeader().setReorderingAllowed(false);
         
-        toolsPanel.add(addButton);
-        toolsPanel.add(editButton);
-        toolsPanel.add(deleteButton);
+        // Sorter untuk tabel
+        TableRowSorter<LibrarianTableModel> sorter = new TableRowSorter<>(tableModel);
+        librarianTable.setRowSorter(sorter);
         
-        add(toolsPanel, BorderLayout.CENTER);
-        
-        // Tabel pustakawan
-        String[] columnNames = {"ID Staff", "Nama", "Posisi", "Email", "Telepon", "Level Akses"};
-        librarianModel = new DefaultTableModel(columnNames, 0) {
+        // Mouse listener untuk double-click
+        librarianTable.addMouseListener(new MouseAdapter() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Non-editable table
-            }
-        };
-        
-        // Isi data pustakawan
-        refreshLibrariansTable();
-        
-        librariansTable = new JTable(librarianModel);
-        librariansTable.setFillsViewportHeight(true);
-        librariansTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        
-        // Listener untuk mengaktifkan tombol edit dan delete
-        librariansTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting() && librariansTable.getSelectedRow() != -1) {
-                    // Cek apakah memilih diri sendiri (tidak boleh dihapus)
-                    String selectedStaffId = (String) librariansTable.getValueAt(librariansTable.getSelectedRow(), 0);
-                    boolean isSelf = selectedStaffId.equals(currentLibrarian.getStaffId());
-                    
-                    // Hanya admin yang dapat mengedit informasi pustakawan
-                    editButton.setEnabled(currentLibrarian.getPermission() == LibrarianPermission.ADMIN);
-                    // Hanya admin yang dapat menghapus pustakawan (kecuali dirinya sendiri)
-                    deleteButton.setEnabled(currentLibrarian.getPermission() == LibrarianPermission.ADMIN && !isSelf);
-                } else {
-                    editButton.setEnabled(false);
-                    deleteButton.setEnabled(false);
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editLibrarian();
                 }
             }
         });
         
-        JScrollPane scrollPane = new JScrollPane(librariansTable);
-        add(scrollPane, BorderLayout.SOUTH);
+        // Panel untuk tabel dengan scrolling
+        JScrollPane tableScrollPane = new JScrollPane(librarianTable);
+        add(tableScrollPane, BorderLayout.CENTER);
+        
+        // Panel tombol
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        addButton = new JButton("Tambah Pustakawan");
+        editButton = new JButton("Edit Pustakawan");
+        deleteButton = new JButton("Hapus Pustakawan");
+        backButton = new JButton("Kembali");
+        
+        addButton.addActionListener(e -> addLibrarian());
+        editButton.addActionListener(e -> editLibrarian());
+        deleteButton.addActionListener(e -> deleteLibrarian());
+        backButton.addActionListener(e -> mainWindow.showMainPanel());
+        
+        buttonPanel.add(addButton);
+        buttonPanel.add(editButton);
+        buttonPanel.add(deleteButton);
+        buttonPanel.add(backButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+        
+        // Set initial button states
+        updateButtonStates();
     }
     
     /**
-     * Refresh tabel pustakawan
+     * Refresh data tabel
      */
-    private void refreshLibrariansTable() {
-        librarianModel.setRowCount(0); // Clear table
+    public void refreshData() {
+        tableModel.setLibrarians(new ArrayList<>(mainWindow.getLibrary().getLibrarians()));
+        updateButtonStates();
+    }
+    
+    /**
+     * Update status tombol berdasarkan hak akses
+     */
+    private void updateButtonStates() {
+        boolean isAdmin = mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.ADMIN;
         
-        for (Librarian librarian : library.getLibrarians()) {
-            librarianModel.addRow(new Object[]{
-                librarian.getStaffId(),
-                librarian.getName(),
-                librarian.getPosition(),
-                librarian.getEmail(),
-                librarian.getPhoneNumber(),
-                librarian.getPermission().toString()
-            });
+        addButton.setEnabled(isAdmin);
+        editButton.setEnabled(isAdmin);
+        deleteButton.setEnabled(isAdmin);
+    }
+    
+    /**
+     * Cari pustakawan berdasarkan keyword
+     */
+    private void searchLibrarians() {
+        String keyword = searchField.getText().trim().toLowerCase();
+        if (keyword.isEmpty()) {
+            refreshData();
+            return;
         }
+        
+        ArrayList<Librarian> filteredList = new ArrayList<>();
+        for (Librarian librarian : mainWindow.getLibrary().getLibrarians()) {
+            if (librarian.getName().toLowerCase().contains(keyword) ||
+                librarian.getStaffId().toLowerCase().contains(keyword) ||
+                librarian.getPosition().toLowerCase().contains(keyword) ||
+                librarian.getEmail().toLowerCase().contains(keyword)) {
+                filteredList.add(librarian);
+            }
+        }
+        
+        tableModel.setLibrarians(filteredList);
     }
     
     /**
-     * Menampilkan dialog untuk menambah pustakawan baru
+     * Tambah pustakawan baru
      */
-    private void showAddLibrarianDialog() {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Tambah Pustakawan Baru", ModalityType.APPLICATION_MODAL);
-        dialog.setSize(500, 500);
-        dialog.setLocationRelativeTo(this);
+    private void addLibrarian() {
+        if (mainWindow.getCurrentLibrarian().getPermission() != LibrarianPermission.ADMIN) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menambah pustakawan!", "Akses Ditolak");
+            return;
+        }
         
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
+        // Panel form untuk input data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
         
-        // Person info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("ID Person:"), gbc);
+        JTextField personIdField = new JTextField(20);
+        JTextField nameField = new JTextField(20);
+        JTextField addressField = new JTextField(20);
+        JTextField phoneField = new JTextField(20);
+        JTextField emailField = new JTextField(20);
+        JTextField staffIdField = new JTextField(20);
+        JTextField positionField = new JTextField(20);
+        JTextField salaryField = new JTextField(20);
+        JComboBox<LibrarianPermission> permissionCombo = new JComboBox<>(LibrarianPermission.values());
         
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField idField = new JTextField(15);
-        panel.add(idField, gbc);
+        formPanel.add(new JLabel("ID Person:"));
+        formPanel.add(personIdField);
+        formPanel.add(new JLabel("Nama:"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Alamat:"));
+        formPanel.add(addressField);
+        formPanel.add(new JLabel("Nomor Telepon:"));
+        formPanel.add(phoneField);
+        formPanel.add(new JLabel("Email:"));
+        formPanel.add(emailField);
+        formPanel.add(new JLabel("ID Staff:"));
+        formPanel.add(staffIdField);
+        formPanel.add(new JLabel("Posisi:"));
+        formPanel.add(positionField);
+        formPanel.add(new JLabel("Gaji:"));
+        formPanel.add(salaryField);
+        formPanel.add(new JLabel("Hak Akses:"));
+        formPanel.add(permissionCombo);
         
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Nama:"), gbc);
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, formPanel, "Tambah Pustakawan", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField nameField = new JTextField(15);
-        panel.add(nameField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Alamat:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField addressField = new JTextField(15);
-        panel.add(addressField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("No. Telepon:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField phoneField = new JTextField(15);
-        panel.add(phoneField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Email:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField emailField = new JTextField(15);
-        panel.add(emailField, gbc);
-        
-        // Librarian info
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("ID Staff:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JTextField staffIdField = new JTextField(15);
-        panel.add(staffIdField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panel.add(new JLabel("Posisi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 6;
-        JTextField positionField = new JTextField(15);
-        panel.add(positionField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        panel.add(new JLabel("Gaji:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 7;
-        JTextField salaryField = new JTextField(15);
-        panel.add(salaryField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Level Akses:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 8;
-        String[] permissions = {"BASIC", "FULL", "ADMIN"};
-        JComboBox<String> permissionCombo = new JComboBox<>(permissions);
-        panel.add(permissionCombo, gbc);
-        
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
-        
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton cancelButton = new JButton("Batal");
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        JButton saveButton = createStyledButton("Simpan", new Color(39, 174, 96));
-        saveButton.addActionListener(e -> {
+        if (result == JOptionPane.OK_OPTION) {
             try {
                 // Validasi input
-                if (idField.getText().isEmpty() || nameField.getText().isEmpty() || 
-                    staffIdField.getText().isEmpty() || positionField.getText().isEmpty()) {
-                    showErrorMessage("Semua field harus diisi!", "Error");
-                    return;
+                if (personIdField.getText().trim().isEmpty() || 
+                    nameField.getText().trim().isEmpty() ||
+                    staffIdField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("ID Person, Nama, dan ID Staff tidak boleh kosong!");
                 }
                 
-                // Buat Person
+                double salary = 0;
+                try {
+                    salary = Double.parseDouble(salaryField.getText().trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Gaji harus berupa angka!");
+                }
+                
+                // Buat objek Person
                 Person person = new Person(
-                    idField.getText().trim(),
+                    personIdField.getText().trim(),
                     nameField.getText().trim(),
                     addressField.getText().trim(),
                     phoneField.getText().trim()
                 );
                 person.setEmail(emailField.getText().trim());
                 
-                // Buat Librarian
-                LibrarianPermission permission = LibrarianPermission.valueOf(
-                    (String) permissionCombo.getSelectedItem()
-                );
-                
-                double salary = 0;
-                try {
-                    salary = Double.parseDouble(salaryField.getText().trim());
-                } catch (NumberFormatException ex) {
-                    showErrorMessage("Gaji harus berupa angka!", "Error");
-                    return;
-                }
-                
+                // Buat objek Librarian
                 Librarian librarian = new Librarian(
                     person,
                     staffIdField.getText().trim(),
                     positionField.getText().trim(),
                     salary,
-                    permission
+                    (LibrarianPermission) permissionCombo.getSelectedItem()
                 );
                 
                 // Tambahkan ke library
-                library.addLibrarian(librarian);
+                mainWindow.getLibrary().addLibrarian(librarian);
+                refreshData();
                 
-                dialog.dispose();
-                showInfoMessage("Pustakawan berhasil ditambahkan!", "Sukses");
-                
-                // Refresh tabel pustakawan
-                refreshLibrariansTable();
-                
+                GUIUtils.infoDialog(this, "Pustakawan berhasil ditambahkan!", "Sukses");
             } catch (Exception ex) {
-                showErrorMessage("Error: " + ex.getMessage(), "Error");
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
             }
-        });
-        
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        
-        panel.add(buttonPanel, gbc);
-        
-        dialog.add(panel);
-        dialog.setVisible(true);
+        }
     }
     
     /**
      * Edit pustakawan yang dipilih
      */
-    private void editSelectedLibrarian() {
-        int row = librariansTable.getSelectedRow();
-        if (row != -1) {
-            String staffId = (String) librariansTable.getValueAt(row, 0);
-            Librarian selectedLibrarian = findLibrarianByStaffId(staffId);
-            if (selectedLibrarian != null) {
-                showEditLibrarianDialog(selectedLibrarian);
+    private void editLibrarian() {
+        if (mainWindow.getCurrentLibrarian().getPermission() != LibrarianPermission.ADMIN) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk mengubah pustakawan!", "Akses Ditolak");
+            return;
+        }
+        
+        int selectedRow = librarianTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtils.errorDialog(this, "Pilih pustakawan yang akan diubah!", "Tidak Ada Pustakawan Dipilih");
+            return;
+        }
+        
+        int modelRow = librarianTable.convertRowIndexToModel(selectedRow);
+        Librarian librarian = tableModel.getLibrarianAt(modelRow);
+        
+        if (librarian.equals(mainWindow.getCurrentLibrarian())) {
+            GUIUtils.errorDialog(this, "Anda tidak dapat mengubah data pustakawan yang sedang login!", "Akses Ditolak");
+            return;
+        }
+        
+        // Panel form untuk edit data
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        
+        JTextField nameField = new JTextField(librarian.getName(), 20);
+        JTextField addressField = new JTextField(librarian.getAddress(), 20);
+        JTextField phoneField = new JTextField(librarian.getPhoneNumber(), 20);
+        JTextField emailField = new JTextField(librarian.getEmail(), 20);
+        JTextField positionField = new JTextField(librarian.getPosition(), 20);
+        JTextField salaryField = new JTextField(String.valueOf(librarian.getSalary()), 20);
+        JComboBox<LibrarianPermission> permissionCombo = new JComboBox<>(LibrarianPermission.values());
+        permissionCombo.setSelectedItem(librarian.getPermission());
+        
+        formPanel.add(new JLabel("ID Person:"));
+        formPanel.add(new JLabel(librarian.getId()));
+        formPanel.add(new JLabel("ID Staff:"));
+        formPanel.add(new JLabel(librarian.getStaffId()));
+        formPanel.add(new JLabel("Nama:"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Alamat:"));
+        formPanel.add(addressField);
+        formPanel.add(new JLabel("Nomor Telepon:"));
+        formPanel.add(phoneField);
+        formPanel.add(new JLabel("Email:"));
+        formPanel.add(emailField);
+        formPanel.add(new JLabel("Posisi:"));
+        formPanel.add(positionField);
+        formPanel.add(new JLabel("Gaji:"));
+        formPanel.add(salaryField);
+        formPanel.add(new JLabel("Hak Akses:"));
+        formPanel.add(permissionCombo);
+        
+        // Tampilkan dialog
+        int result = JOptionPane.showConfirmDialog(
+            this, formPanel, "Edit Pustakawan", 
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        
+        if (result == JOptionPane.OK_OPTION) {
+            try {
+                // Validasi input
+                if (nameField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Nama tidak boleh kosong!");
+                }
+                
+                double salary = 0;
+                try {
+                    salary = Double.parseDouble(salaryField.getText().trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("Gaji harus berupa angka!");
+                }
+                
+                // Update data
+                librarian.setName(nameField.getText().trim());
+                librarian.setAddress(addressField.getText().trim());
+                librarian.setPhoneNumber(phoneField.getText().trim());
+                librarian.setEmail(emailField.getText().trim());
+                librarian.setPosition(positionField.getText().trim());
+                librarian.setSalary(salary);
+                librarian.setPermission((LibrarianPermission) permissionCombo.getSelectedItem());
+                
+                refreshData();
+                
+                GUIUtils.infoDialog(this, "Data pustakawan berhasil diubah!", "Sukses");
+            } catch (Exception ex) {
+                GUIUtils.errorDialog(this, ex.getMessage(), "Error");
             }
         }
     }
@@ -311,185 +334,35 @@ public class LibrarianPanel extends BasePanel {
     /**
      * Hapus pustakawan yang dipilih
      */
-    private void deleteSelectedLibrarian() {
-        int row = librariansTable.getSelectedRow();
-        if (row != -1) {
-            String staffId = (String) librariansTable.getValueAt(row, 0);
-            Librarian selectedLibrarian = findLibrarianByStaffId(staffId);
-            
-            if (selectedLibrarian != null && !selectedLibrarian.equals(currentLibrarian)) {
-                boolean confirm = showConfirmDialog(
-                    "Apakah Anda yakin ingin menghapus pustakawan " + selectedLibrarian.getName() + "?",
-                    "Konfirmasi Hapus");
-                
-                if (confirm) {
-                    library.removeLibrarian(selectedLibrarian);
-                    refreshLibrariansTable();
-                    showInfoMessage("Pustakawan berhasil dihapus.", "Sukses");
-                }
-            }
+    private void deleteLibrarian() {
+        if (mainWindow.getCurrentLibrarian().getPermission() != LibrarianPermission.ADMIN) {
+            GUIUtils.errorDialog(this, "Anda tidak memiliki hak akses untuk menghapus pustakawan!", "Akses Ditolak");
+            return;
         }
-    }
-    
-    /**
-     * Menampilkan dialog untuk mengedit pustakawan
-     * @param librarian Pustakawan yang akan diedit
-     */
-    private void showEditLibrarianDialog(Librarian librarian) {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Pustakawan", ModalityType.APPLICATION_MODAL);
-        dialog.setSize(500, 500);
-        dialog.setLocationRelativeTo(this);
         
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
+        int selectedRow = librarianTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtils.errorDialog(this, "Pilih pustakawan yang akan dihapus!", "Tidak Ada Pustakawan Dipilih");
+            return;
+        }
         
-        // Person info
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.add(new JLabel("ID Person:"), gbc);
+        int modelRow = librarianTable.convertRowIndexToModel(selectedRow);
+        Librarian librarian = tableModel.getLibrarianAt(modelRow);
         
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        JTextField idField = new JTextField(librarian.getId(), 15);
-        idField.setEditable(false); // ID tidak bisa diubah
-        panel.add(idField, gbc);
+        if (librarian.equals(mainWindow.getCurrentLibrarian())) {
+            GUIUtils.errorDialog(this, "Anda tidak dapat menghapus akun pustakawan yang sedang login!", "Akses Ditolak");
+            return;
+        }
         
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        panel.add(new JLabel("Nama:"), gbc);
+        boolean confirm = GUIUtils.confirmDialog(
+            this, 
+            "Apakah Anda yakin ingin menghapus pustakawan " + librarian.getName() + "?", 
+            "Konfirmasi Hapus");
         
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        JTextField nameField = new JTextField(librarian.getName(), 15);
-        panel.add(nameField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        panel.add(new JLabel("Alamat:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        JTextField addressField = new JTextField(librarian.getAddress(), 15);
-        panel.add(addressField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("No. Telepon:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        JTextField phoneField = new JTextField(librarian.getPhoneNumber(), 15);
-        panel.add(phoneField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panel.add(new JLabel("Email:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        JTextField emailField = new JTextField(librarian.getEmail(), 15);
-        panel.add(emailField, gbc);
-        
-        // Librarian info
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panel.add(new JLabel("ID Staff:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        JTextField staffIdField = new JTextField(librarian.getStaffId(), 15);
-        staffIdField.setEditable(false); // ID Staff tidak bisa diubah
-        panel.add(staffIdField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panel.add(new JLabel("Posisi:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 6;
-        JTextField positionField = new JTextField(librarian.getPosition(), 15);
-        panel.add(positionField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        panel.add(new JLabel("Gaji:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 7;
-        JTextField salaryField = new JTextField(String.valueOf(librarian.getSalary()), 15);
-        panel.add(salaryField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        panel.add(new JLabel("Level Akses:"), gbc);
-        
-        gbc.gridx = 1;
-        gbc.gridy = 8;
-        String[] permissions = {"BASIC", "FULL", "ADMIN"};
-        JComboBox<String> permissionCombo = new JComboBox<>(permissions);
-        permissionCombo.setSelectedItem(librarian.getPermission().toString());
-        panel.add(permissionCombo, gbc);
-        
-        // Buttons
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        gbc.gridwidth = 2;
-        gbc.insets = new Insets(20, 5, 5, 5);
-        
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton cancelButton = new JButton("Batal");
-        cancelButton.addActionListener(e -> dialog.dispose());
-        
-        JButton saveButton = createStyledButton("Simpan", new Color(39, 174, 96));
-        saveButton.addActionListener(e -> {
-            try {
-                // Validasi input
-                if (nameField.getText().isEmpty() || positionField.getText().isEmpty()) {
-                    showErrorMessage("Semua field harus diisi!", "Error");
-                    return;
-                }
-                
-                // Update Librarian
-                librarian.setName(nameField.getText().trim());
-                librarian.setAddress(addressField.getText().trim());
-                librarian.setPhoneNumber(phoneField.getText().trim());
-                librarian.setEmail(emailField.getText().trim());
-                librarian.setPosition(positionField.getText().trim());
-                
-                try {
-                    double salary = Double.parseDouble(salaryField.getText().trim());
-                    librarian.setSalary(salary);
-                } catch (NumberFormatException ex) {
-                    showErrorMessage("Gaji harus berupa angka!", "Error");
-                    return;
-                }
-                
-                LibrarianPermission permission = LibrarianPermission.valueOf(
-                    (String) permissionCombo.getSelectedItem()
-                );
-                librarian.setPermission(permission);
-                
-                dialog.dispose();
-                showInfoMessage("Pustakawan berhasil diupdate!", "Sukses");
-                
-                // Refresh tabel pustakawan
-                refreshLibrariansTable();
-                
-            } catch (Exception ex) {
-                showErrorMessage("Error: " + ex.getMessage(), "Error");
-            }
-        });
-        
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(saveButton);
-        
-        panel.add(buttonPanel, gbc);
-        
-        dialog.add(panel);
-        dialog.setVisible(true);
+        if (confirm) {
+            mainWindow.getLibrary().removeLibrarian(librarian);
+            refreshData();
+            GUIUtils.infoDialog(this, "Pustakawan berhasil dihapus!", "Sukses");
+        }
     }
 }

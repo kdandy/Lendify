@@ -20,11 +20,13 @@ public class Book {
     private BookFormat format;
     private Language language;
     private List<Reservation> reservations;
+    private List<BookCategory> categories; // Tambahkan field categories
     
     // konsruktor
     public Book() {
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
+        this.categories = new ArrayList<>(); // Inisialisasi categories
     }
     
     public Book(String isbn, String title, String author, String publisher, int year) {
@@ -35,6 +37,7 @@ public class Book {
         this.publicationYear = year;
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
+        this.categories = new ArrayList<>(); // Inisialisasi categories
     }
     
     public Book(String isbn, String title, String author, String publisher, int year, 
@@ -50,6 +53,7 @@ public class Book {
         this.language = language;
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
+        this.categories = new ArrayList<>(); // Inisialisasi categories
     }
     
     // getters and setters
@@ -131,6 +135,48 @@ public class Book {
     
     public List<Reservation> getReservations() {
         return reservations;
+    }
+    
+    /**
+     * Mendapatkan daftar kategori buku
+     * @return Daftar kategori
+     */
+    public List<BookCategory> getCategories() {
+        if (categories == null) {
+            categories = new ArrayList<>();
+        }
+        return categories;
+    }
+    
+    /**
+     * Menambahkan buku ke kategori
+     * @param category kategori yang akan ditambahkan
+     */
+    public void addCategory(BookCategory category) {
+        if (categories == null) {
+            categories = new ArrayList<>();
+        }
+        if (!categories.contains(category)) {
+            categories.add(category);
+            // Pastikan buku juga ditambahkan ke daftar buku dalam kategori (relasi bidirectional)
+            if (!category.getBooks().contains(this)) {
+                category.addBook(this);
+            }
+        }
+    }
+    
+    /**
+     * Menghapus buku dari kategori
+     * @param category kategori yang akan dihapus
+     */
+    public void removeCategory(BookCategory category) {
+        if (categories != null) {
+            categories.remove(category);
+            // Pastikan buku juga dihapus dari daftar buku dalam kategori (relasi bidirectional)
+            if (category.getBooks().contains(this)) {
+                category.removeBook(this);
+            }
+        }
     }
     
     // metode

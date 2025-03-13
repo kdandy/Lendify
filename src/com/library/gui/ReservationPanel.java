@@ -1,612 +1,454 @@
 package com.library.gui;
 
-import com.library.enums.*;
-import com.library.model.*;
+import com.library.enums.LibrarianPermission;
+import com.library.enums.ReservationStatus;
+import com.library.gui.utils.DialogUtils;
+import com.library.gui.utils.GUIUtils;
+import com.library.gui.utils.TableModels.ReservationTableModel;
+import com.library.model.Book;
+import com.library.model.Member;
+import com.library.model.Reservation;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Panel untuk manajemen reservasi buku
+ * Panel untuk kelola reservasi buku
  */
-public class ReservationPanel extends BasePanel {
-    private JTabbedPane tabbedPane;
-
-    /**
-     * Konstruktor
-     * @param parentFrame Frame parent (LendifyGUI)
-     */
-    public ReservationPanel(LendifyGUI parentFrame) {
-        super(parentFrame);
-    }
+public class ReservationPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private LendifyGUI mainWindow;
+    private JTable reservationTable;
+    private ReservationTableModel tableModel;
+    private JTextField searchField;
+    private JButton createButton;
+    private JButton processButton;
+    private JButton cancelButton;
+    private JButton detailsButton;
+    private JButton backButton;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
     
-    @Override
-    protected void initComponents() {
-        // Tambahkan judul panel
-        JLabel titleLabel = createTitleLabel("Kelola Reservasi");
-        add(titleLabel, BorderLayout.NORTH);
-        
-        // Panel dengan tabs untuk berbagai fungsi reservasi
-        tabbedPane = new JTabbedPane();
-        
-        // Tab Reservasi Baru
-        tabbedPane.addTab("Buat Reservasi", createNewReservationPanel());
-        
-        // Tab Daftar Reservasi
-        tabbedPane.addTab("Daftar Reservasi", createReservationListPanel());
-        
-        // Tab Proses Reservasi
-        tabbedPane.addTab("Proses Reservasi", createProcessReservationPanel());
-        
-        // Tab Batalkan Reservasi
-        tabbedPane.addTab("Batalkan Reservasi", createCancelReservationPanel());
-        
-        add(tabbedPane, BorderLayout.CENTER);
+    /**
+     * Constructor untuk ReservationPanel
+     */
+    public ReservationPanel(LendifyGUI mainWindow) {
+        this.mainWindow = mainWindow;
+        setupUI();
     }
     
     /**
-     * Membuat panel untuk reservasi baru
+     * Setup komponen UI
      */
-    private JPanel createNewReservationPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+    private void setupUI() {
+        setLayout(new BorderLayout(10, 10));
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Panel untuk memilih anggota
-        JPanel memberPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        memberPanel.setBorder(BorderFactory.createTitledBorder("Pilih Anggota"));
-        
-        memberPanel.add(new JLabel("Anggota:"));
-        
-        JComboBox<String> memberCombo = new JComboBox<>();
-        memberCombo.setPreferredSize(new Dimension(300, 25));
-        for (Member member : parentFrame.getMembers()) {
-            memberCombo.addItem(member.getMemberId() + " - " + member.getName());
-        }
-        memberPanel.add(memberCombo);
-        
-        // Panel untuk memilih buku
-        JPanel bookPanel = new JPanel(new BorderLayout());
-        bookPanel.setBorder(BorderFactory.createTitledBorder("Pilih Buku"));
-        
-        // Tabel buku
-        String[] bookColumns = {"ISBN", "Judul", "Pengarang", "Tersedia", "Dapat Direservasi"};
-        DefaultTableModel bookModel = new DefaultTableModel(bookColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        // Isi data buku yang tidak tersedia
-        for (Book book : library.getCollection().getBooks()) {
-            if (book.getAvailableItems().isEmpty() && !book.getItems().isEmpty()) {
-                bookModel.addRow(new Object[]{
-                    book.getISBN(),
-                    book.getTitle(),
-                    book.getAuthor(),
-                    "0 salinan",
-                    book.hasReservation() ? "Tidak" : "Ya"
-                });
-            }
-        }
-        
-        JTable booksTable = new JTable(bookModel);
-        booksTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        booksTable.setFillsViewportHeight(true);
-        JScrollPane bookScrollPane = new JScrollPane(booksTable);
-        bookPanel.add(bookScrollPane, BorderLayout.CENTER);
-        
-        // Panel tombol
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        
-        JButton reserveButton = createStyledButton("Reservasi Buku", new Color(39, 174, 96));
-        reserveButton.addActionListener(e -> {
-            if (memberCombo.getSelectedIndex() == -1) {
-                showErrorMessage("Silakan pilih anggota!", "Error");
-                return;
-            }
-            
-            if (booksTable.getSelectedRow() == -1) {
-                showErrorMessage("Silakan pilih buku!", "Error");
-                return;
-            }
-            
-            // Periksa apakah buku dapat direservasi
-            if (booksTable.getValueAt(booksTable.getSelectedRow(), 4).equals("Tidak")) {
-                showErrorMessage("Buku ini tidak dapat direservasi karena sudah ada reservasi yang menunggu.", "Error");
-                return;
-            }
-            
-            // Ambil anggota yang dipilih
-            String memberString = (String) memberCombo.getSelectedItem();
-            String memberId = memberString.split(" - ")[0];
-            Member selectedMember = findMemberById(memberId);
-            
-            // Ambil buku yang dipilih
-            String isbn = (String) booksTable.getValueAt(booksTable.getSelectedRow(), 0);
-            Book selectedBook = parentFrame.getBooks().get(isbn);
-            
-            if (selectedMember != null && selectedBook != null) {
-                try {
-                    // Buat reservasi
-                    Reservation reservation = selectedMember.reserveBook(selectedBook);
-                    parentFrame.getReservations().put(reservation.getReservationId(), reservation);
-                    
-                    showInfoMessage(
-                            "Reservasi berhasil dibuat:\n" +
-                            "ID Reservasi: " + reservation.getReservationId() + "\n" +
-                            "Buku: " + selectedBook.getTitle() + "\n" +
-                            "Anggota: " + selectedMember.getName() + "\n" +
-                            "Tanggal Reservasi: " + dateFormat.format(reservation.getReservationDate()) + "\n" +
-                            "Status: " + reservation.getStatus(),
-                            "Sukses");
-                    
-                    // Refresh tabel
-                    bookModel.setRowCount(0);
-                    for (Book book : library.getCollection().getBooks()) {
-                        if (book.getAvailableItems().isEmpty() && !book.getItems().isEmpty()) {
-                            bookModel.addRow(new Object[]{
-                                book.getISBN(),
-                                book.getTitle(),
-                                book.getAuthor(),
-                                "0 salinan",
-                                book.hasReservation() ? "Tidak" : "Ya"
-                            });
-                        }
-                    }
-                    
-                } catch (Exception ex) {
-                    showErrorMessage("Error: " + ex.getMessage(), "Error");
-                }
-            }
-        });
-        
-        buttonPanel.add(reserveButton);
-        
-        // Gabungkan semua komponen
-        panel.add(memberPanel, BorderLayout.NORTH);
-        panel.add(bookPanel, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        
-        return panel;
-    }
-    
-    /**
-     * Membuat panel untuk menampilkan daftar reservasi
-     */
-    private JPanel createReservationListPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        // Panel judul
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        JLabel titleLabel = new JLabel("Kelola Reservasi", SwingConstants.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titlePanel.add(titleLabel, BorderLayout.CENTER);
         
         // Panel pencarian
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        searchField = new JTextField(20);
+        JButton searchButton = new JButton("Cari");
+        searchButton.addActionListener(e -> searchReservations());
         
-        searchPanel.add(new JLabel("Cari:"));
-        JTextField searchField = new JTextField(20);
+        searchPanel.add(new JLabel("Cari: "));
         searchPanel.add(searchField);
-        
-        JButton searchButton = createStyledButton("Cari", new Color(52, 152, 219));
         searchPanel.add(searchButton);
         
-        JButton showAllButton = createStyledButton("Tampilkan Semua", new Color(52, 152, 219));
-        searchPanel.add(showAllButton);
+        titlePanel.add(searchPanel, BorderLayout.EAST);
+        add(titlePanel, BorderLayout.NORTH);
         
-        panel.add(searchPanel, BorderLayout.NORTH);
+        // Panel tabel
+        tableModel = new ReservationTableModel(new ArrayList<>());
+        reservationTable = new JTable(tableModel);
+        reservationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        reservationTable.setRowHeight(25);
+        reservationTable.getTableHeader().setReorderingAllowed(false);
         
-        // Tabel reservasi
-        String[] reservationColumns = {"ID Reservasi", "Anggota", "Buku", "Tanggal Reservasi", "Status"};
-        DefaultTableModel reservationModel = new DefaultTableModel(reservationColumns, 0) {
+        // Sorter untuk tabel
+        TableRowSorter<ReservationTableModel> sorter = new TableRowSorter<>(tableModel);
+        reservationTable.setRowSorter(sorter);
+        
+        // Mouse listener untuk double-click
+        reservationTable.addMouseListener(new MouseAdapter() {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        // Isi data reservasi
-        refreshReservationsTable(reservationModel);
-        
-        JTable reservationsTable = new JTable(reservationModel);
-        reservationsTable.setFillsViewportHeight(true);
-        JScrollPane reservationsScrollPane = new JScrollPane(reservationsTable);
-        panel.add(reservationsScrollPane, BorderLayout.CENTER);
-        
-        // Aksi pencarian
-        searchButton.addActionListener(e -> {
-            String keyword = searchField.getText().trim().toLowerCase();
-            if (keyword.isEmpty()) {
-                refreshReservationsTable(reservationModel);
-                return;
-            }
-            
-            // Clear model
-            reservationModel.setRowCount(0);
-            
-            // Add matching reservations
-            for (Reservation reservation : parentFrame.getReservations().values()) {
-                if (reservation.getMember().getName().toLowerCase().contains(keyword) ||
-                    reservation.getBook().getTitle().toLowerCase().contains(keyword) ||
-                    reservation.getReservationId().toLowerCase().contains(keyword)) {
-                    
-                    reservationModel.addRow(new Object[]{
-                        reservation.getReservationId(),
-                        reservation.getMember().getName(),
-                        reservation.getBook().getTitle(),
-                        dateFormat.format(reservation.getReservationDate()),
-                        reservation.getStatus()
-                    });
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    viewReservationDetails();
                 }
             }
         });
         
-        // Aksi tampilkan semua
-        showAllButton.addActionListener(e -> {
-            refreshReservationsTable(reservationModel);
+        // Selection listener untuk update status tombol
+        reservationTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                updateButtonStates();
+            }
         });
         
-        // Panel tombol refresh
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        // Panel untuk tabel dengan scrolling
+        JScrollPane tableScrollPane = new JScrollPane(reservationTable);
+        add(tableScrollPane, BorderLayout.CENTER);
         
-        JButton refreshButton = createStyledButton("Refresh", new Color(52, 152, 219));
-        refreshButton.addActionListener(e -> {
-            refreshReservationsTable(reservationModel);
-        });
+        // Panel filter
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+        filterPanel.setBorder(BorderFactory.createTitledBorder("Filter Status"));
         
-        buttonPanel.add(refreshButton);
+        JRadioButton allRadio = new JRadioButton("Semua", true);
+        JRadioButton pendingRadio = new JRadioButton("Pending");
+        JRadioButton completedRadio = new JRadioButton("Completed");
+        JRadioButton cancelledRadio = new JRadioButton("Cancelled");
         
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        ButtonGroup statusGroup = new ButtonGroup();
+        statusGroup.add(allRadio);
+        statusGroup.add(pendingRadio);
+        statusGroup.add(completedRadio);
+        statusGroup.add(cancelledRadio);
         
-        return panel;
-    }
-    
-    /**
-     * Refresh tabel reservasi
-     */
-    private void refreshReservationsTable(DefaultTableModel model) {
-        model.setRowCount(0);
+        allRadio.addActionListener(e -> filterReservations(null));
+        pendingRadio.addActionListener(e -> filterReservations(ReservationStatus.PENDING));
+        completedRadio.addActionListener(e -> filterReservations(ReservationStatus.FULFILLED));
+        cancelledRadio.addActionListener(e -> filterReservations(ReservationStatus.CANCELLED));
         
-        for (Reservation reservation : parentFrame.getReservations().values()) {
-            model.addRow(new Object[]{
-                reservation.getReservationId(),
-                reservation.getMember().getName(),
-                reservation.getBook().getTitle(),
-                dateFormat.format(reservation.getReservationDate()),
-                reservation.getStatus()
-            });
-        }
-    }
-    
-    /**
-     * Membuat panel untuk memproses reservasi
-     */
-    private JPanel createProcessReservationPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        
-        // Panel pencarian
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        
-        searchPanel.add(new JLabel("ID Reservasi:"));
-        JTextField reservationIdField = new JTextField(15);
-        searchPanel.add(reservationIdField);
-        
-        JButton searchButton = createStyledButton("Cari", new Color(52, 152, 219));
-        searchPanel.add(searchButton);
-        
-        JButton showAllButton = createStyledButton("Tampilkan Reservasi Pending", new Color(52, 152, 219));
-        searchPanel.add(showAllButton);
-        
-        panel.add(searchPanel, BorderLayout.NORTH);
-        
-        // Tabel reservasi pending
-        String[] reservationColumns = {"ID Reservasi", "Anggota", "Buku", "Tanggal Reservasi", "Status", "Ketersediaan Buku"};
-        DefaultTableModel reservationModel = new DefaultTableModel(reservationColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        // Isi data reservasi pending
-        for (Reservation reservation : parentFrame.getReservations().values()) {
-            if (reservation.getStatus() == ReservationStatus.PENDING) {
-                boolean bookAvailable = !reservation.getBook().getAvailableItems().isEmpty();
-                
-                reservationModel.addRow(new Object[]{
-                    reservation.getReservationId(),
-                    reservation.getMember().getName(),
-                    reservation.getBook().getTitle(),
-                    dateFormat.format(reservation.getReservationDate()),
-                    reservation.getStatus(),
-                    bookAvailable ? "Tersedia" : "Tidak Tersedia"
-                });
-            }
-        }
-        
-        JTable reservationsTable = new JTable(reservationModel);
-        reservationsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        reservationsTable.setFillsViewportHeight(true);
-        JScrollPane reservationsScrollPane = new JScrollPane(reservationsTable);
-        panel.add(reservationsScrollPane, BorderLayout.CENTER);
+        filterPanel.add(allRadio);
+        filterPanel.add(pendingRadio);
+        filterPanel.add(completedRadio);
+        filterPanel.add(cancelledRadio);
         
         // Panel tombol
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel actionPanel = new JPanel(new BorderLayout());
+        actionPanel.add(filterPanel, BorderLayout.NORTH);
         
-        JButton refreshButton = createStyledButton("Refresh", new Color(52, 152, 219));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        createButton = new JButton("Buat Reservasi");
+        processButton = new JButton("Proses Reservasi");
+        cancelButton = new JButton("Batalkan Reservasi");
+        detailsButton = new JButton("Lihat Detail");
+        backButton = new JButton("Kembali");
         
-        JButton processButton = createStyledButton("Proses Reservasi", new Color(39, 174, 96));
-        processButton.setEnabled(false);
+        createButton.addActionListener(e -> createReservation());
+        processButton.addActionListener(e -> processReservation());
+        cancelButton.addActionListener(e -> cancelReservation());
+        detailsButton.addActionListener(e -> viewReservationDetails());
+        backButton.addActionListener(e -> mainWindow.showMainPanel());
         
-        // Enable process button when a row is selected
-        reservationsTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = reservationsTable.getSelectedRow();
-                if (row != -1) {
-                    boolean bookAvailable = reservationsTable.getValueAt(row, 5).equals("Tersedia");
-                    processButton.setEnabled(bookAvailable);
-                } else {
-                    processButton.setEnabled(false);
-                }
-            }
-        });
-        
-        // Aksi pencarian
-        searchButton.addActionListener(e -> {
-            String reservationId = reservationIdField.getText().trim();
-            if (reservationId.isEmpty()) {
-                showErrorMessage("Masukkan ID reservasi!", "Error");
-                return;
-            }
-            
-            Reservation reservation = parentFrame.getReservations().get(reservationId);
-            if (reservation == null) {
-                showErrorMessage("Reservasi tidak ditemukan!", "Error");
-                return;
-            }
-            
-            if (reservation.getStatus() != ReservationStatus.PENDING) {
-                showErrorMessage("Reservasi ini sudah diproses atau dibatalkan!", "Error");
-                return;
-            }
-            
-            // Clear model
-            reservationModel.setRowCount(0);
-            
-            // Add the found reservation
-            boolean bookAvailable = !reservation.getBook().getAvailableItems().isEmpty();
-            
-            reservationModel.addRow(new Object[]{
-                reservation.getReservationId(),
-                reservation.getMember().getName(),
-                reservation.getBook().getTitle(),
-                dateFormat.format(reservation.getReservationDate()),
-                reservation.getStatus(),
-                bookAvailable ? "Tersedia" : "Tidak Tersedia"
-            });
-        });
-        
-        // Aksi tampilkan semua reservasi pending
-        showAllButton.addActionListener(e -> {
-            // Clear model
-            reservationModel.setRowCount(0);
-            
-            // Add all pending reservations
-            for (Reservation reservation : parentFrame.getReservations().values()) {
-                if (reservation.getStatus() == ReservationStatus.PENDING) {
-                    boolean bookAvailable = !reservation.getBook().getAvailableItems().isEmpty();
-                    
-                    reservationModel.addRow(new Object[]{
-                        reservation.getReservationId(),
-                        reservation.getMember().getName(),
-                        reservation.getBook().getTitle(),
-                        dateFormat.format(reservation.getReservationDate()),
-                        reservation.getStatus(),
-                        bookAvailable ? "Tersedia" : "Tidak Tersedia"
-                    });
-                }
-            }
-        });
-        
-        // Aksi refresh
-        refreshButton.addActionListener(e -> {
-            // Reuse showAllButton action
-            showAllButton.doClick();
-        });
-        
-        // Aksi proses reservasi
-        processButton.addActionListener(e -> {
-            int row = reservationsTable.getSelectedRow();
-            if (row != -1) {
-                String reservationId = (String) reservationsTable.getValueAt(row, 0);
-                Reservation reservation = parentFrame.getReservations().get(reservationId);
-                
-                if (reservation != null) {
-                    try {
-                        currentLibrarian.processReservation(reservation);
-                        // Setelah diproses, status reservasi menjadi FULFILLED sesuai enum
-                        // reservation.getStatus() == ReservationStatus.FULFILLED
-                        
-                        showInfoMessage(
-                                "Reservasi berhasil diproses:\n" +
-                                "Buku: " + reservation.getBook().getTitle() + "\n" +
-                                "Anggota: " + reservation.getMember().getName() + "\n" +
-                                "Status: " + reservation.getStatus(),
-                                "Sukses");
-                        
-                        // Refresh table
-                        showAllButton.doClick();
-                        
-                    } catch (Exception ex) {
-                        showErrorMessage("Error: " + ex.getMessage(), "Error");
-                    }
-                }
-            }
-        });
-        
-        buttonPanel.add(refreshButton);
+        buttonPanel.add(createButton);
         buttonPanel.add(processButton);
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(detailsButton);
+        buttonPanel.add(backButton);
         
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        actionPanel.add(buttonPanel, BorderLayout.SOUTH);
+        add(actionPanel, BorderLayout.SOUTH);
         
-        return panel;
+        // Set initial button states
+        updateButtonStates();
     }
     
     /**
-     * Membuat panel untuk membatalkan reservasi
+     * Refresh data panel
      */
-    private JPanel createCancelReservationPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(10, 10, 10, 10));
+    public void refreshData() {
+        // Kumpulkan semua data reservasi dari anggota
+        List<Reservation> allReservations = new ArrayList<>();
         
-        // Panel pencarian
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        
-        searchPanel.add(new JLabel("ID Reservasi:"));
-        JTextField reservationIdField = new JTextField(15);
-        searchPanel.add(reservationIdField);
-        
-        JButton searchButton = createStyledButton("Cari", new Color(52, 152, 219));
-        searchPanel.add(searchButton);
-        
-        JButton showAllButton = createStyledButton("Tampilkan Reservasi Pending", new Color(52, 152, 219));
-        searchPanel.add(showAllButton);
-        
-        panel.add(searchPanel, BorderLayout.NORTH);
-        
-        // Tabel reservasi pending
-        String[] reservationColumns = {"ID Reservasi", "Anggota", "Buku", "Tanggal Reservasi", "Status"};
-        DefaultTableModel reservationModel = new DefaultTableModel(reservationColumns, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        
-        // Isi data reservasi pending
-        for (Reservation reservation : parentFrame.getReservations().values()) {
-            if (reservation.getStatus() == ReservationStatus.PENDING) {
-                reservationModel.addRow(new Object[]{
-                    reservation.getReservationId(),
-                    reservation.getMember().getName(),
-                    reservation.getBook().getTitle(),
-                    dateFormat.format(reservation.getReservationDate()),
-                    reservation.getStatus()
-                });
+        for (Member member : mainWindow.getMembers()) {
+            for (Reservation reservation : member.getReservations()) {
+                allReservations.add(reservation);
+                mainWindow.getReservations().put(reservation.getReservationId(), reservation);
             }
         }
         
-        JTable reservationsTable = new JTable(reservationModel);
-        reservationsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        reservationsTable.setFillsViewportHeight(true);
-        JScrollPane reservationsScrollPane = new JScrollPane(reservationsTable);
-        panel.add(reservationsScrollPane, BorderLayout.CENTER);
+        tableModel.setReservations(allReservations);
+        updateButtonStates();
+    }
+    
+    /**
+     * Update status tombol berdasarkan hak akses dan seleksi
+     */
+    private void updateButtonStates() {
+        boolean isBasic = mainWindow.getCurrentLibrarian().getPermission() == LibrarianPermission.BASIC;
+        boolean reservationSelected = reservationTable.getSelectedRow() != -1;
+        boolean isPendingSelected = false;
         
-        // Panel tombol
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        if (reservationSelected) {
+            int modelRow = reservationTable.convertRowIndexToModel(reservationTable.getSelectedRow());
+            Reservation reservation = tableModel.getReservationAt(modelRow);
+            isPendingSelected = (reservation.getStatus() == ReservationStatus.PENDING);
+        }
         
-        JButton refreshButton = createStyledButton("Refresh", new Color(52, 152, 219));
+        // Tombol buat reservasi selalu aktif
+        createButton.setEnabled(true);
         
-        JButton cancelButton = createStyledButton("Batalkan Reservasi", new Color(231, 76, 60));
-        cancelButton.setEnabled(false);
+        // Tombol proses reservasi aktif jika ada reservasi pending yang dipilih
+        processButton.setEnabled(reservationSelected && isPendingSelected);
         
-        // Enable cancel button when a row is selected
-        reservationsTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                cancelButton.setEnabled(reservationsTable.getSelectedRow() != -1);
+        // Tombol batalkan reservasi aktif jika ada reservasi pending yang dipilih
+        cancelButton.setEnabled(reservationSelected && isPendingSelected);
+        
+        // Tombol detail aktif jika ada reservasi yang dipilih
+        detailsButton.setEnabled(reservationSelected);
+    }
+    
+    /**
+     * Cari reservasi berdasarkan keyword
+     */
+    private void searchReservations() {
+        String keyword = searchField.getText().trim().toLowerCase();
+        if (keyword.isEmpty()) {
+            refreshData();
+            return;
+        }
+        
+        ArrayList<Reservation> filteredList = new ArrayList<>();
+        for (Reservation reservation : collectAllReservations()) {
+            if (reservation.getReservationId().toLowerCase().contains(keyword) ||
+                reservation.getBook().getTitle().toLowerCase().contains(keyword) ||
+                reservation.getMember().getName().toLowerCase().contains(keyword) ||
+                dateFormat.format(reservation.getReservationDate()).contains(keyword)) {
+                filteredList.add(reservation);
             }
-        });
+        }
         
-        // Aksi pencarian
-        searchButton.addActionListener(e -> {
-            String reservationId = reservationIdField.getText().trim();
-            if (reservationId.isEmpty()) {
-                showErrorMessage("Masukkan ID reservasi!", "Error");
-                return;
+        tableModel.setReservations(filteredList);
+        updateButtonStates();
+    }
+    
+    /**
+     * Filter reservasi berdasarkan status
+     */
+    private void filterReservations(ReservationStatus status) {
+        if (status == null) {
+            refreshData();
+            return;
+        }
+        
+        ArrayList<Reservation> filteredList = new ArrayList<>();
+        for (Reservation reservation : collectAllReservations()) {
+            if (reservation.getStatus() == status) {
+                filteredList.add(reservation);
             }
+        }
+        
+        tableModel.setReservations(filteredList);
+        updateButtonStates();
+    }
+    
+    /**
+     * Collect all reservations
+     */
+    private List<Reservation> collectAllReservations() {
+        List<Reservation> allReservations = new ArrayList<>();
+        for (Member member : mainWindow.getMembers()) {
+            allReservations.addAll(member.getReservations());
+        }
+        return allReservations;
+    }
+    
+    /**
+     * Buat reservasi baru
+     */
+    private void createReservation() {
+        // Pilih anggota
+        Member member = DialogUtils.showMemberSelectionDialog(
+            this, 
+            mainWindow.getMembers(), 
+            "Pilih Anggota"
+        );
+        
+        if (member == null) {
+            return; // User canceled
+        }
+        
+        // Cek status anggota
+        if (!member.isActive()) {
+            GUIUtils.errorDialog(
+                this, 
+                "Anggota tidak aktif atau diblacklist! Tidak dapat melakukan reservasi.", 
+                "Anggota Tidak Aktif"
+            );
+            return;
+        }
+        
+        // Pilih buku
+        List<Book> unavailableBooks = new ArrayList<>();
+        for (Book book : mainWindow.getLibrary().getCollection().getBooks()) {
+            if (book.getAvailableItems().isEmpty() && !book.getItems().isEmpty()) {
+                unavailableBooks.add(book);
+            }
+        }
+        
+        if (unavailableBooks.isEmpty()) {
+            GUIUtils.errorDialog(
+                this, 
+                "Tidak ada buku yang perlu direservasi. Semua buku tersedia atau tidak memiliki salinan.", 
+                "Reservasi Tidak Diperlukan"
+            );
+            return;
+        }
+        
+        Book book = DialogUtils.showBookSelectionDialog(
+            this, 
+            unavailableBooks, 
+            "Pilih Buku untuk Reservasi"
+        );
+        
+        if (book == null) {
+            return; // User canceled
+        }
+        
+        // Cek apakah anggota sudah memiliki reservasi atau peminjaman untuk buku ini
+        boolean alreadyReservedOrBorrowed = false;
+        for (Reservation reservation : member.getReservations()) {
+            if (reservation.getBook().equals(book) && 
+                reservation.getStatus() == ReservationStatus.PENDING) {
+                alreadyReservedOrBorrowed = true;
+                break;
+            }
+        }
+        
+        if (alreadyReservedOrBorrowed) {
+            GUIUtils.errorDialog(
+                this, 
+                "Anggota sudah memiliki reservasi aktif untuk buku ini.", 
+                "Reservasi Duplikat"
+            );
+            return;
+        }
+        
+        try {
+            // Buat reservasi
+            Reservation reservation = member.reserveBook(book);
+            mainWindow.getReservations().put(reservation.getReservationId(), reservation);
             
-            Reservation reservation = parentFrame.getReservations().get(reservationId);
-            if (reservation == null) {
-                showErrorMessage("Reservasi tidak ditemukan!", "Error");
-                return;
-            }
+            refreshData();
             
-            if (reservation.getStatus() != ReservationStatus.PENDING) {
-                showErrorMessage("Reservasi ini sudah diproses atau dibatalkan!", "Error");
-                return;
-            }
+            GUIUtils.infoDialog(
+                this, 
+                "Reservasi berhasil dibuat:\n" +
+                "ID Reservasi: " + reservation.getReservationId() + "\n" +
+                "Buku: " + book.getTitle() + "\n" +
+                "Anggota: " + member.getName() + "\n" +
+                "Tanggal Reservasi: " + dateFormat.format(reservation.getReservationDate()) + "\n" +
+                "Status: " + reservation.getStatus(), 
+                "Reservasi Berhasil"
+            );
+        } catch (Exception ex) {
+            GUIUtils.errorDialog(this, "Terjadi kesalahan saat membuat reservasi: " + ex.getMessage(), "Error");
+        }
+    }
+    
+    /**
+     * Proses reservasi yang dipilih
+     */
+    private void processReservation() {
+        int selectedRow = reservationTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtils.errorDialog(this, "Pilih reservasi yang akan diproses!", "Tidak Ada Reservasi Dipilih");
+            return;
+        }
+        
+        int modelRow = reservationTable.convertRowIndexToModel(selectedRow);
+        Reservation reservation = tableModel.getReservationAt(modelRow);
+        
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            GUIUtils.errorDialog(
+                this, 
+                "Reservasi ini tidak dalam status pending! Status saat ini: " + reservation.getStatus(), 
+                "Status Tidak Valid"
+            );
+            return;
+        }
+        
+        Book book = reservation.getBook();
+        if (book.getAvailableItems().isEmpty()) {
+            GUIUtils.errorDialog(
+                this, 
+                "Tidak ada salinan buku yang tersedia untuk reservasi ini.", 
+                "Tidak Ada Salinan Tersedia"
+            );
+            return;
+        }
+        
+        try {
+            mainWindow.processReservation(reservation);
             
-            // Clear model
-            reservationModel.setRowCount(0);
+            refreshData();
             
-            // Add the found reservation
-            reservationModel.addRow(new Object[]{
-                reservation.getReservationId(),
-                reservation.getMember().getName(),
-                reservation.getBook().getTitle(),
-                dateFormat.format(reservation.getReservationDate()),
-                reservation.getStatus()
-            });
-        });
+            GUIUtils.infoDialog(
+                this, 
+                "Reservasi berhasil diproses:\n" +
+                "Buku: " + reservation.getBook().getTitle() + "\n" +
+                "Anggota: " + reservation.getMember().getName() + "\n" +
+                "Status: " + reservation.getStatus(), 
+                "Reservasi Diproses"
+            );
+        } catch (Exception ex) {
+            GUIUtils.errorDialog(this, "Terjadi kesalahan saat memproses reservasi: " + ex.getMessage(), "Error");
+        }
+    }
+    
+    /**
+     * Batalkan reservasi yang dipilih
+     */
+    private void cancelReservation() {
+        int selectedRow = reservationTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtils.errorDialog(this, "Pilih reservasi yang akan dibatalkan!", "Tidak Ada Reservasi Dipilih");
+            return;
+        }
         
-        // Aksi tampilkan semua reservasi pending
-        showAllButton.addActionListener(e -> {
-            // Clear model
-            reservationModel.setRowCount(0);
+        int modelRow = reservationTable.convertRowIndexToModel(selectedRow);
+        Reservation reservation = tableModel.getReservationAt(modelRow);
+        
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            GUIUtils.errorDialog(
+                this, 
+                "Reservasi ini tidak dalam status pending! Status saat ini: " + reservation.getStatus(), 
+                "Status Tidak Valid"
+            );
+            return;
+        }
+        
+        boolean confirm = GUIUtils.confirmDialog(
+            this, 
+            "Apakah Anda yakin ingin membatalkan reservasi ini?\n" +
+            "Buku: " + reservation.getBook().getTitle() + "\n" +
+            "Anggota: " + reservation.getMember().getName(), 
+            "Konfirmasi Pembatalan"
+        );
+        
+        if (confirm) {
+            reservation.cancelReservation();
             
-            // Add all pending reservations
-            for (Reservation reservation : parentFrame.getReservations().values()) {
-                if (reservation.getStatus() == ReservationStatus.PENDING) {
-                    reservationModel.addRow(new Object[]{
-                        reservation.getReservationId(),
-                        reservation.getMember().getName(),
-                        reservation.getBook().getTitle(),
-                        dateFormat.format(reservation.getReservationDate()),
-                        reservation.getStatus()
-                    });
-                }
-            }
-        });
+            refreshData();
+            
+            GUIUtils.infoDialog(this, "Reservasi berhasil dibatalkan.", "Reservasi Dibatalkan");
+        }
+    }
+    
+    /**
+     * Lihat detail reservasi
+     */
+    private void viewReservationDetails() {
+        int selectedRow = reservationTable.getSelectedRow();
+        if (selectedRow == -1) {
+            GUIUtils.errorDialog(this, "Pilih reservasi untuk melihat detail!", "Tidak Ada Reservasi Dipilih");
+            return;
+        }
         
-        // Aksi refresh
-        refreshButton.addActionListener(e -> {
-            // Reuse showAllButton action
-            showAllButton.doClick();
-        });
+        int modelRow = reservationTable.convertRowIndexToModel(selectedRow);
+        Reservation reservation = tableModel.getReservationAt(modelRow);
         
-        // Aksi batalkan reservasi
-        cancelButton.addActionListener(e -> {
-            int row = reservationsTable.getSelectedRow();
-            if (row != -1) {
-                String reservationId = (String) reservationsTable.getValueAt(row, 0);
-                Reservation reservation = parentFrame.getReservations().get(reservationId);
-                
-                if (reservation != null) {
-                    boolean confirm = showConfirmDialog(
-                        "Apakah Anda yakin ingin membatalkan reservasi ini?",
-                        "Konfirmasi Pembatalan");
-                    
-                    if (confirm) {
-                        reservation.cancelReservation();
-                        
-                        showInfoMessage("Reservasi berhasil dibatalkan.", "Sukses");
-                        
-                        // Refresh table
-                        showAllButton.doClick();
-                    }
-                }
-            }
-        });
-        
-        buttonPanel.add(refreshButton);
-        buttonPanel.add(cancelButton);
-        
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        
-        return panel;
+        DialogUtils.showReservationDetailsDialog(this, reservation);
     }
 }

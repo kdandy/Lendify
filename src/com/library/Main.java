@@ -2,10 +2,13 @@ package com.library;
 
 import com.library.enums.*;
 import com.library.model.*;
+import com.library.gui.LendifyGUI;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit; // sistem login
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class Main {
     private static Scanner scanner = new Scanner(System.in);
@@ -50,6 +53,80 @@ public class Main {
         
         initializeLibrary();
         
+        // Pilihan mode GUI atau Terminal
+        System.out.println("\n==== PILIH MODE APLIKASI ====");
+        System.out.println("1. Mode Terminal");
+        System.out.println("2. Mode GUI");
+        int modeChoice = getIntInput("Pilih mode: ");
+        
+        if (modeChoice == 2) {
+            // Jalankan versi GUI
+            System.out.println("Memulai aplikasi dalam mode GUI...");
+            launchGUI();
+        } else {
+            // Jalankan versi Terminal
+            System.out.println("Memulai aplikasi dalam mode Terminal...");
+            runTerminalMode();
+        }
+    }
+    
+    /**
+     * Menjalankan aplikasi dalam mode GUI
+     */
+    private static void launchGUI() {
+        try {
+            // Set Look and Feel sistem
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            
+            // Inisialisasi dan jalankan GUI
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    LendifyGUI gui = new LendifyGUI(library, currentLibrarian);
+                    
+                    // Transfer data dari objek global ke GUI
+                    for (BookCategory category : categories.values()) {
+                        gui.getCategories().put(category.getName(), category);
+                    }
+                    
+                    for (Book book : books.values()) {
+                        gui.getBooks().put(book.getISBN(), book);
+                    }
+                    
+                    for (BookItem item : bookItems.values()) {
+                        gui.getBookItems().put(item.getBarcode(), item);
+                    }
+                    
+                    for (BookLoan loan : loans.values()) {
+                        gui.getLoans().put(loan.getLoanId(), loan);
+                    }
+                    
+                    for (Reservation reservation : reservations.values()) {
+                        gui.getReservations().put(reservation.getReservationId(), reservation);
+                    }
+                    
+                    gui.getMembers().addAll(members);
+                    
+                    // Refresh data pada semua panel
+                    gui.showMainPanel();
+                    gui.setVisible(true);
+                } catch (Exception e) {
+                    System.err.println("Error saat menjalankan GUI: " + e.getMessage());
+                    e.printStackTrace();
+                    System.out.println("\nMemulai mode Terminal sebagai fallback...");
+                    runTerminalMode();
+                }
+            });
+        } catch (Exception e) {
+            System.err.println("Error saat inisialisasi GUI: " + e.getMessage());
+            System.out.println("\nMemulai mode Terminal sebagai fallback...");
+            runTerminalMode();
+        }
+    }
+    
+    /**
+     * Menjalankan aplikasi dalam mode Terminal
+     */
+    private static void runTerminalMode() {
         boolean exit = false;
         while (!exit) {
             displayMainMenu();

@@ -1,387 +1,299 @@
 package com.library.gui;
 
+import com.library.enums.*;
 import com.library.model.*;
+import com.library.gui.utils.GUIUtils;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.text.SimpleDateFormat;
+import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 /**
- * Kelas utama untuk antarmuka grafis Lendify
+ * Class utama untuk aplikasi GUI Lendify
  */
 public class LendifyGUI extends JFrame {
-    // Model data
+    private static final long serialVersionUID = 1L;
     private Library library;
     private Librarian currentLibrarian;
-    private List<Member> members;
+    
+    // Map untuk data
     private Map<String, BookCategory> categories;
     private Map<String, Book> books;
     private Map<String, BookItem> bookItems;
     private Map<String, BookLoan> loans;
     private Map<String, Reservation> reservations;
+    private java.util.List<Member> members;
     
-    // Komponen GUI utama
-    private JPanel mainPanel;
+    // Panel-panel utama
+    private JPanel cardPanel;
     private CardLayout cardLayout;
-    private JPanel menuPanel;
-    private JLabel welcomeLabel;
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-
-    // Panel-panel modul
-    private DashboardPanel dashboardPanel;
+    private LoginPanel loginPanel;
+    private MainPanel mainPanel;
     private LibrarianPanel librarianPanel;
     private CategoryPanel categoryPanel;
     private BookPanel bookPanel;
     private MemberPanel memberPanel;
-    private LendingPanel lendingPanel;
+    private LoanPanel loanPanel;
     private ReservationPanel reservationPanel;
     private SearchPanel searchPanel;
     private StatisticsPanel statisticsPanel;
     
-    // Konstanta untuk identifikasi panel
-    public static final String DASHBOARD_PANEL = "DASHBOARD";
-    public static final String LIBRARIANS_PANEL = "LIBRARIANS";
-    public static final String CATEGORIES_PANEL = "CATEGORIES";
-    public static final String BOOKS_PANEL = "BOOKS";
-    public static final String MEMBERS_PANEL = "MEMBERS";
-    public static final String LENDING_PANEL = "LENDING";
-    public static final String RESERVATION_PANEL = "RESERVATION";
-    public static final String SEARCH_PANEL = "SEARCH";
-    public static final String STATISTICS_PANEL = "STATISTICS";
-    
     /**
-     * Konstruktor untuk GUI
+     * Constructor utama untuk GUI Lendify
      */
-    public LendifyGUI(Library library, Librarian currentLibrarian, List<Member> members,
-                      Map<String, BookCategory> categories, Map<String, Book> books,
-                      Map<String, BookItem> bookItems, Map<String, BookLoan> loans,
-                      Map<String, Reservation> reservations) {
+    public LendifyGUI(Library library, Librarian currentLibrarian) {
         this.library = library;
         this.currentLibrarian = currentLibrarian;
-        this.members = members;
-        this.categories = categories;
-        this.books = books;
-        this.bookItems = bookItems;
-        this.loans = loans;
-        this.reservations = reservations;
         
-        initializeGUI();
-        createPanels();
-    }
-    
-    /**
-     * Inisialisasi komponen GUI
-     */
-    private void initializeGUI() {
-        setTitle("Lendify - Sistem Manajemen Perpustakaan");
+        // Inisialisasi data
+        this.categories = new HashMap<>();
+        this.books = new HashMap<>();
+        this.bookItems = new HashMap<>();
+        this.loans = new HashMap<>();
+        this.reservations = new HashMap<>();
+        this.members = new ArrayList<>();
+        
+        // Tambahkan kategori yang sudah ada ke map
+        for (BookCategory category : library.getCollection().getCategories()) {
+            categories.put(category.getName(), category);
+        }
+        
+        // Tambahkan buku yang sudah ada ke map
+        for (Book book : library.getCollection().getBooks()) {
+            books.put(book.getISBN(), book);
+            
+            // Tambahkan juga book items
+            for (BookItem item : book.getItems()) {
+                bookItems.put(item.getBarcode(), item);
+            }
+        }
+        
+        // Setup GUI
+        setupGUI();
+    }   
+
+    /** 
+     * Setup komponen GUI
+     */ 
+    private void setupGUI() {
+        setTitle("Sistem Manajemen Perpustakaan - LENDIFY (GUI)");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700);
+        setSize(1024, 768);
         setLocationRelativeTo(null);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
         
-        // Main layout setup
-        JPanel contentPane = new JPanel(new BorderLayout());
-        setContentPane(contentPane);
-        
-        // Membuat panel header
-        JPanel headerPanel = createHeaderPanel();
-        contentPane.add(headerPanel, BorderLayout.NORTH);
-        
-        // Membuat panel menu di sebelah kiri
-        menuPanel = createMenuPanel();
-        contentPane.add(menuPanel, BorderLayout.WEST);
-        
-        // Membuat panel utama dengan CardLayout
+        // Setup card layout untuk switching panel
         cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        contentPane.add(mainPanel, BorderLayout.CENTER);
+        cardPanel = new JPanel(cardLayout);
         
-        // Menambahkan footer panel
-        JPanel footerPanel = createFooterPanel();
-        contentPane.add(footerPanel, BorderLayout.SOUTH);
-    }
-    
-    /**
-     * Membuat panel-panel untuk setiap modul
-     */
-    private void createPanels() {
-        // Inisialisasi panel-panel
-        dashboardPanel = new DashboardPanel(this);
+        // Inisialisasi panels
+        loginPanel = new LoginPanel(this);
+        mainPanel = new MainPanel(this);
         librarianPanel = new LibrarianPanel(this);
         categoryPanel = new CategoryPanel(this);
         bookPanel = new BookPanel(this);
         memberPanel = new MemberPanel(this);
-        lendingPanel = new LendingPanel(this);
+        loanPanel = new LoanPanel(this);
         reservationPanel = new ReservationPanel(this);
         searchPanel = new SearchPanel(this);
         statisticsPanel = new StatisticsPanel(this);
         
-        // Tambahkan panel-panel ke mainPanel
-        mainPanel.add(dashboardPanel, DASHBOARD_PANEL);
-        mainPanel.add(librarianPanel, LIBRARIANS_PANEL);
-        mainPanel.add(categoryPanel, CATEGORIES_PANEL);
-        mainPanel.add(bookPanel, BOOKS_PANEL);
-        mainPanel.add(memberPanel, MEMBERS_PANEL);
-        mainPanel.add(lendingPanel, LENDING_PANEL);
-        mainPanel.add(reservationPanel, RESERVATION_PANEL);
-        mainPanel.add(searchPanel, SEARCH_PANEL);
-        mainPanel.add(statisticsPanel, STATISTICS_PANEL);
+        // Tambahkan panels ke card layout
+        cardPanel.add(loginPanel, "login");
+        cardPanel.add(mainPanel, "main");
+        cardPanel.add(librarianPanel, "librarian");
+        cardPanel.add(categoryPanel, "category");
+        cardPanel.add(bookPanel, "book");
+        cardPanel.add(memberPanel, "member");
+        cardPanel.add(loanPanel, "loan");
+        cardPanel.add(reservationPanel, "reservation");
+        cardPanel.add(searchPanel, "search");
+        cardPanel.add(statisticsPanel, "statistics");
         
-        // Tampilkan dashboard secara default
-        cardLayout.show(mainPanel, DASHBOARD_PANEL);
-    }
-    
-    /**
-     * Membuat header panel
-     */
-    private JPanel createHeaderPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(41, 128, 185));
-        panel.setBorder(new EmptyBorder(10, 15, 10, 15));
+        // Default tampilkan panel utama (karena login sudah dilakukan di terminal)
+        cardLayout.show(cardPanel, "main");
         
-        JLabel titleLabel = new JLabel("LENDIFY - SISTEM MANAJEMEN PERPUSTAKAAN");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));
-        titleLabel.setForeground(Color.WHITE);
-        panel.add(titleLabel, BorderLayout.WEST);
+        add(cardPanel);
         
-        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        rightPanel.setOpaque(false);
+        // Menu bar
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem exitItem = new JMenuItem("Keluar");
+        exitItem.addActionListener(e -> System.exit(0));
+        fileMenu.add(exitItem);
         
-        welcomeLabel = new JLabel("Selamat datang, " + currentLibrarian.getName());
-        welcomeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        welcomeLabel.setForeground(Color.WHITE);
-        rightPanel.add(welcomeLabel);
-        
-        JButton logoutButton = new JButton("Keluar");
-        logoutButton.setBackground(new Color(231, 76, 60));
-        logoutButton.setForeground(Color.WHITE);
-        logoutButton.addActionListener(e -> {
-            int choice = JOptionPane.showConfirmDialog(this, 
-                    "Apakah Anda yakin ingin keluar dari sistem?", 
-                    "Konfirmasi Keluar", 
-                    JOptionPane.YES_NO_OPTION);
-            
-            if (choice == JOptionPane.YES_OPTION) {
-                dispose();
-                System.exit(0);
-            }
+        JMenu helpMenu = new JMenu("Bantuan");
+        JMenuItem aboutItem = new JMenuItem("Tentang");
+        aboutItem.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, 
+                "LENDIFY - Sistem Manajemen Perpustakaan Pemrograman Berorientasi Objek\nVersi 1.1\n© 2025", 
+                "Tentang Aplikasi", 
+                JOptionPane.INFORMATION_MESSAGE);
         });
-        rightPanel.add(logoutButton);
+        helpMenu.add(aboutItem);
         
-        panel.add(rightPanel, BorderLayout.EAST);
-        
-        return panel;
+        menuBar.add(fileMenu);
+        menuBar.add(helpMenu);
+        setJMenuBar(menuBar);
     }
     
-    /**
-     * Membuat menu panel
-     */
-    private JPanel createMenuPanel() {
-        JPanel panel = new JPanel();
-        panel.setBackground(new Color(52, 73, 94));
-        panel.setPreferredSize(new Dimension(220, 0));
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(new EmptyBorder(20, 0, 0, 0));
-        
-        // Tambahkan tombol-tombol menu
-        addMenuButton(panel, "Dashboard", "dashboard.png", DASHBOARD_PANEL);
-        addMenuButton(panel, "Kelola Pustakawan", "librarian.png", LIBRARIANS_PANEL);
-        addMenuButton(panel, "Kelola Kategori", "category.png", CATEGORIES_PANEL);
-        addMenuButton(panel, "Kelola Buku", "book.png", BOOKS_PANEL);
-        addMenuButton(panel, "Kelola Anggota", "member.png", MEMBERS_PANEL);
-        addMenuButton(panel, "Peminjaman & Pengembalian", "lending.png", LENDING_PANEL);
-        addMenuButton(panel, "Kelola Reservasi", "reservation.png", RESERVATION_PANEL);
-        addMenuButton(panel, "Cari Buku", "search.png", SEARCH_PANEL);
-        addMenuButton(panel, "Statistik", "statistics.png", STATISTICS_PANEL);
-        
-        // Tambahkan panel kosong untuk mendorong tombol "Terminal" ke bawah
-        panel.add(Box.createVerticalGlue());
-        
-        // Tombol untuk kembali ke Terminal Mode
-        JButton terminalButton = new JButton("Kembali ke Terminal Mode");
-        terminalButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        terminalButton.setForeground(Color.WHITE);
-        terminalButton.setBackground(new Color(192, 57, 43));
-        terminalButton.setFocusPainted(false);
-        terminalButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        terminalButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        terminalButton.addActionListener(e -> {
-            int choice = JOptionPane.showConfirmDialog(this,
-                    "Apakah Anda yakin ingin kembali ke mode Terminal?",
-                    "Konfirmasi Mode Terminal",
-                    JOptionPane.YES_NO_OPTION);
-            
-            if (choice == JOptionPane.YES_OPTION) {
-                dispose(); // Tutup jendela GUI
-                
-                // Restart aplikasi dalam mode terminal
-                try {
-                    // Menjalankan main program lagi dengan parameter khusus
-                    ProcessBuilder pb = new ProcessBuilder("java", "-cp", System.getProperty("java.class.path"), 
-                            "com.library.Main", "terminal");
-                    pb.inheritIO();
-                    pb.start();
-                    
-                    System.exit(0);
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, 
-                            "Gagal membuka mode terminal: " + ex.getMessage(), 
-                            "Error", 
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-        panel.add(terminalButton);
-        panel.add(Box.createVerticalStrut(20));
-        
-        return panel;
-    }
+    // Getters dan Setters
     
-    /**
-     * Helper method untuk menambahkan tombol menu
-     */
-    private void addMenuButton(JPanel panel, String text, String iconName, String panelName) {
-        JButton button = new JButton(text);
-        button.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        button.setForeground(Color.WHITE);
-        button.setBackground(new Color(52, 73, 94));
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-        button.setHorizontalAlignment(SwingConstants.LEFT);
-        
-        // Load icon jika tersedia
-        try {
-            ImageIcon icon = new ImageIcon(getClass().getResource("/icons/" + iconName));
-            if (icon.getIconWidth() > 0) {
-                button.setIcon(icon);
-                button.setIconTextGap(10);
-            }
-        } catch (Exception e) {
-            // Icon tidak tersedia, lanjutkan tanpa icon
-        }
-        
-        button.addActionListener(e -> cardLayout.show(mainPanel, panelName));
-        
-        // Hover effect
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(41, 128, 185));
-            }
-            
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(new Color(52, 73, 94));
-            }
-        });
-        
-        panel.add(button);
-        panel.add(Box.createVerticalStrut(5));
-    }
-    
-    /**
-     * Membuat panel footer
-     */
-    private JPanel createFooterPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(new EmptyBorder(5, 10, 5, 10));
-        panel.setBackground(new Color(236, 240, 241));
-        
-        JLabel footerLabel = new JLabel("© 2024 Lendify - Sistem Manajemen Perpustakaan");
-        footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        panel.add(footerLabel, BorderLayout.WEST);
-        
-        JLabel versionLabel = new JLabel("Versi 1.0");
-        versionLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        panel.add(versionLabel, BorderLayout.EAST);
-        
-        return panel;
-    }
-    
-    /**
-     * Akses ke Library
-     */
     public Library getLibrary() {
         return library;
     }
     
-    /**
-     * Akses ke Librarian saat ini
-     */
     public Librarian getCurrentLibrarian() {
         return currentLibrarian;
     }
     
-    /**
-     * Akses ke daftar Member
-     */
-    public List<Member> getMembers() {
-        return members;
-    }
-    
-    /**
-     * Akses ke map Category
-     */
     public Map<String, BookCategory> getCategories() {
         return categories;
     }
     
-    /**
-     * Akses ke map Book
-     */
     public Map<String, Book> getBooks() {
         return books;
     }
     
-    /**
-     * Akses ke map BookItem
-     */
     public Map<String, BookItem> getBookItems() {
         return bookItems;
     }
     
-    /**
-     * Akses ke map Loan
-     */
     public Map<String, BookLoan> getLoans() {
         return loans;
     }
     
-    /**
-     * Akses ke map Reservation
-     */
     public Map<String, Reservation> getReservations() {
         return reservations;
     }
     
-    /**
-     * Akses ke DateFormat
-     */
-    public SimpleDateFormat getDateFormat() {
-        return dateFormat;
+    public java.util.List<Member> getMembers() {
+        return members;
     }
     
-    /**
-     * Menampilkan panel tertentu
-     */
-    public void showPanel(String panelName) {
-        cardLayout.show(mainPanel, panelName);
+    // Switch panel methods
+    
+    public void showLoginPanel() {
+        cardLayout.show(cardPanel, "login");
     }
     
-    /**
-     * Mendapatkan panel utama
-     */
-    public JPanel getMainPanel() {
-        return mainPanel;
+    public void showMainPanel() {
+        cardLayout.show(cardPanel, "main");
     }
     
-    /**
-     * Mendapatkan card layout
-     */
-    public CardLayout getCardLayout() {
-        return cardLayout;
+    public void showLibrarianPanel() {
+        librarianPanel.refreshData();
+        cardLayout.show(cardPanel, "librarian");
+    }
+    
+    public void showCategoryPanel() {
+        categoryPanel.refreshData();
+        cardLayout.show(cardPanel, "category");
+    }
+    
+    public void showBookPanel() {
+        bookPanel.refreshData();
+        cardLayout.show(cardPanel, "book");
+    }
+    
+    public void showMemberPanel() {
+        memberPanel.refreshData();
+        cardLayout.show(cardPanel, "member");
+    }
+    
+    public void showLoanPanel() {
+        loanPanel.refreshData();
+        cardLayout.show(cardPanel, "loan");
+    }
+    
+    public void showReservationPanel() {
+        reservationPanel.refreshData();
+        cardLayout.show(cardPanel, "reservation");
+    }
+    
+    public void showSearchPanel() {
+        searchPanel.refreshData();
+        cardLayout.show(cardPanel, "search");
+    }
+    
+    public void showStatisticsPanel() {
+        statisticsPanel.refreshData();
+        cardLayout.show(cardPanel, "statistics");
+    }
+
+    // Utility methods untuk operasi data
+
+    public void addCategory(BookCategory category) {
+        library.addCategory(category);
+        categories.put(category.getName(), category);
+    }
+    
+    public void removeCategory(BookCategory category) {
+        library.getCollection().removeCategory(category);
+        categories.remove(category.getName());
+    }
+    
+    public void addBook(Book book) {
+        library.addBook(book);
+        books.put(book.getISBN(), book);
+    }
+    
+    public void removeBook(Book book) {
+        library.getCollection().removeBook(book);
+        books.remove(book.getISBN());
+    }
+    
+    public void addBookToCategory(Book book, BookCategory category) {
+        library.addBookToCategory(book, category);
+    }
+    
+    public void addMember(Member member) {
+        members.add(member);
+    }
+    
+    public BookItem addBookItem(Book book, String barcode) throws Exception {
+        BookItem item = currentLibrarian.addBookItem(book, barcode);
+        bookItems.put(barcode, item);
+        return item;
+    }
+    
+    public BookLoan issueBook(Member member, BookItem bookItem) throws Exception {
+        BookLoan loan = currentLibrarian.issueBook(member, bookItem);
+        loans.put(loan.getLoanId(), loan);
+        return loan;
+    }
+    
+    public void returnBook(BookLoan loan) throws Exception {
+        currentLibrarian.returnBook(loan);
+    }
+    
+    public void processReservation(Reservation reservation) throws Exception {
+        currentLibrarian.processReservation(reservation);
+    }
+    
+    // Main method untuk testing
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        SwingUtilities.invokeLater(() -> {
+            try {
+                // Testing only - dalam implementasi sesungguhnya, ini dipanggil dari Main.java
+                Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "123456789");
+                adminPerson.setEmail("admin@perpustakaan.com");
+                Librarian admin = new Librarian(adminPerson, "L001", "Admin Perpustakaan", 0, LibrarianPermission.ADMIN);
+                
+                Library library = new Library("Perpustakaan Test", "Jl. Test No. 123");
+                library.addLibrarian(admin);
+                
+                LendifyGUI gui = new LendifyGUI(library, admin);
+                gui.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }
