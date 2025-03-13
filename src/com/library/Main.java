@@ -49,8 +49,7 @@ public class Main {
             }
         }
         System.out.println("\nSistem siap digunakan!");
-        // Sistem login end
-        
+        // sistem login end
         initializeLibrary();
         
         // Pilihan mode GUI atau Terminal
@@ -71,19 +70,18 @@ public class Main {
     }
     
     /**
-     * Menjalankan aplikasi dalam mode GUI
+     * menjalankan aplikasi dalam mode GUI
      */
     private static void launchGUI() {
         try {
-            // Set Look and Feel sistem
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             
-            // Inisialisasi dan jalankan GUI
+            // inisialisasi dan jalankan GUI
             SwingUtilities.invokeLater(() -> {
                 try {
                     LendifyGUI gui = new LendifyGUI(library, currentLibrarian);
                     
-                    // Transfer data dari objek global ke GUI
+                    // transfer data dari objek global ke GUI
                     for (BookCategory category : categories.values()) {
                         gui.getCategories().put(category.getName(), category);
                     }
@@ -106,7 +104,7 @@ public class Main {
                     
                     gui.getMembers().addAll(members);
                     
-                    // Refresh data pada semua panel
+                    // refresh data pada semua panel
                     gui.showMainPanel();
                     gui.setVisible(true);
                 } catch (Exception e) {
@@ -124,7 +122,7 @@ public class Main {
     }
     
     /**
-     * Menjalankan aplikasi dalam mode Terminal
+     * menjalankan aplikasi dalam mode Terminal
      */
     private static void runTerminalMode() {
         boolean exit = false;
@@ -173,7 +171,7 @@ public class Main {
     }
     
     /**
-     * Sistem login
+     * sistem login
      * @return true jika login berhasil, false jika gagal setelah beberapa percobaan
      */
     private static boolean login() {
@@ -230,8 +228,8 @@ public class Main {
         
         // membuat pustakawan admin default
         try {
-            Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "123456789");
-            adminPerson.setEmail("admin@perpustakaan.com");
+            Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "082125555645");
+            adminPerson.setEmail("admin@lendify.com");
             currentLibrarian = new Librarian(adminPerson, "L001", "Admin Perpustakaan", 0, LibrarianPermission.ADMIN);
             library.addLibrarian(currentLibrarian);
             System.out.println("Pustakawan admin default dibuat.");
@@ -1151,7 +1149,7 @@ public class Main {
             }
         }
     }
-    
+
     private static void displayMembers() {
         if (members.isEmpty()) {
             System.out.println("Tidak ada anggota yang terdaftar.");
@@ -1841,7 +1839,7 @@ public class Main {
     }
     
     private static void createReservation() {
-        // Pilih anggota
+        // pilih anggota
         displayMembers();
         
         if (members.isEmpty()) {
@@ -1857,7 +1855,7 @@ public class Main {
         
         Member member = members.get(memberIndex - 1);
         
-        // Pilih buku
+        // pilih buku
         displayBooks();
         
         List<Book> bookList = library.getCollection().getBooks();
@@ -1874,7 +1872,7 @@ public class Main {
         
         Book book = bookList.get(bookIndex - 1);
         
-        // Cek ketersediaan buku
+        // cek ketersediaan buku
         if (!book.getAvailableItems().isEmpty()) {
             System.out.println("Buku ini sudah tersedia. Reservasi tidak diperlukan.");
             return;
@@ -1898,7 +1896,7 @@ public class Main {
     private static void viewReservations() {
         List<Reservation> allReservations = new ArrayList<>();
         
-        // Kumpulkan semua reservasi dari semua anggota
+        // kumpulkan semua reservasi dari semua anggota
         for (Member member : members) {
             allReservations.addAll(member.getReservations());
         }
@@ -2177,7 +2175,7 @@ public class Main {
         }
         
         try {
-            // Bersihkan data yang ada
+            // bersihkan data yang ada
             library.getCollection().getBooks().clear();
             library.getCollection().getCategories().clear();
             members.clear();
@@ -2186,7 +2184,7 @@ public class Main {
             loans.clear();
             reservations.clear();
             
-            // Buat kategori
+            // buat kategori
             BookCategory fictionCategory = new BookCategory("Fiksi", "Novel, cerita pendek, dan karya fiksi lainnya");
             BookCategory nonFictionCategory = new BookCategory("Non-Fiksi", "Karya faktual, biografi, dan materi pendidikan");
             BookCategory scienceCategory = new BookCategory("Sains", "Buku tentang berbagai disiplin ilmu sains");
@@ -2305,40 +2303,31 @@ public class Main {
             library.addBookToCategory(book2, fictionCategory);
             library.addBookToCategory(book3, fictionCategory);
             library.addBookToCategory(book4, fictionCategory);
-            
             library.addBookToCategory(book5, nonFictionCategory);
             library.addBookToCategory(book5, scienceCategory);
             library.addBookToCategory(book6, scienceCategory);
             library.addBookToCategory(book7, scienceCategory);
             library.addBookToCategory(book7, nonFictionCategory);
-            
             library.addBookToCategory(book8, technologyCategory);
             library.addBookToCategory(book8, nonFictionCategory);
             library.addBookToCategory(book9, technologyCategory);
             library.addBookToCategory(book10, technologyCategory);
             library.addBookToCategory(book10, scienceCategory);
-            
             library.addBookToCategory(book11, historyCategory);
             library.addBookToCategory(book11, nonFictionCategory);
             library.addBookToCategory(book12, historyCategory);
-            
             library.addBookToCategory(book13, philosophyCategory);
             library.addBookToCategory(book13, nonFictionCategory);
-            
             library.addBookToCategory(book14, biographyCategory);
             library.addBookToCategory(book14, nonFictionCategory);
             library.addBookToCategory(book14, historyCategory);
-            
             library.addBookToCategory(book15, cookingCategory);
             library.addBookToCategory(book15, nonFictionCategory);
-            
             library.addBookToCategory(book16, artCategory);
             library.addBookToCategory(book16, nonFictionCategory);
-            
             library.addBookToCategory(book17, travelCategory);
             library.addBookToCategory(book17, nonFictionCategory);
             library.addBookToCategory(book18, travelCategory);
-            
             library.addBookToCategory(book19, technologyCategory);
             library.addBookToCategory(book20, cookingCategory);
             
@@ -2376,54 +2365,54 @@ public class Main {
             List<Member> memberList = new ArrayList<>();
             
             // anggota reguler
-            Person person1 = new Person("P001", "Dandy Faishal Fahmi", "Jl. Timoho Timur 1A", "082125555645");
-            person1.setEmail("hello@dandy.my.id");
+            Person person1 = new Person("P001", "Dandy", "Jl. Timoho Timur 1A", "082125555645");
+            person1.setEmail("dandy@students.undip.ac.id");
             personList.add(person1);
-            
-            Person person2 = new Person("P002", "Ratna Sari", "Jl. Mawar No. 25", "082345678901");
-            person2.setEmail("ratna.sari@email.com");
+
+            Person person2 = new Person("P002", "Gaza", "Jl. Mawar No. 25", "082345678901");
+            person2.setEmail("gaza@students.undip.ac.id");
             personList.add(person2);
-            
-            Person person3 = new Person("P003", "Budi Santoso", "Jl. Melati No. 42", "083456789012");
-            person3.setEmail("budi.santoso@company.com");
+
+            Person person3 = new Person("P003", "Vava", "Jl. Melati No. 42", "083456789012");
+            person3.setEmail("vava@students.undip.ac.id");
             personList.add(person3);
-            
-            Person person4 = new Person("P004", "Dewi Anggraini", "Jl. Anggrek No. 7", "084567890123");
-            person4.setEmail("dewi.anggraini@company.com");
+
+            Person person4 = new Person("P004", "Fauzan", "Jl. Anggrek No. 7", "084567890123");
+            person4.setEmail("fauzan@students.undip.ac.id");
             personList.add(person4);
-            
-            Person person5 = new Person("P005", "Eko Prasetyo", "Jl. Kenanga No. 15", "085678901234");
-            person5.setEmail("eko.prasetyo@email.com");
+
+            Person person5 = new Person("P005", "Ganen", "Jl. Kenanga No. 15", "085678901234");
+            person5.setEmail("ganen@students.undip.ac.id");
             personList.add(person5);
-            
+
             // anggota mahasiswa
             Person person6 = new Person("P006", "Fani Wijaya", "Jl. Kampus No. 3", "086789012345");
-            person6.setEmail("fani.wijaya@university.edu");
+            person6.setEmail("fani.wijaya@students.undip.ac.id");
             personList.add(person6);
-            
+
             Person person7 = new Person("P007", "Gunawan Hidayat", "Jl. Pendidikan No. 8", "087890123456");
-            person7.setEmail("gunawan.hidayat@university.edu");
+            person7.setEmail("gunawan.hidayat@students.undip.ac.id");
             personList.add(person7);
-            
+
             Person person8 = new Person("P008", "Hani Susanti", "Jl. Mahasiswa No. 12", "088901234567");
-            person8.setEmail("hani.susanti@university.edu");
+            person8.setEmail("hani.susanti@students.undip.ac.id");
             personList.add(person8);
-            
+
             Person person9 = new Person("P009", "Indra Kusuma", "Jl. Ilmu No. 21", "089012345678");
-            person9.setEmail("indra.kusuma@university.edu");
+            person9.setEmail("indra.kusuma@students.undip.ac.id");
             personList.add(person9);
-            
+
             Person person10 = new Person("P010", "Joko Widodo", "Jl. Cendekia No. 17", "089123456789");
-            person10.setEmail("joko.widodo@university.edu");
+            person10.setEmail("joko.widodo@students.undip.ac.id");
             personList.add(person10);
             
-            // Buat anggota dari person
+            // buat anggota dari person
             for (int i = 0; i < personList.size(); i++) {
                 Person person = personList.get(i);
                 Member member = currentLibrarian.addMember(person);
                 
                 if (i < 5) { // 5 anggota reguler
-                    boolean isPremium = i % 2 == 0; // Setiap anggota genap adalah premium
+                    boolean isPremium = i % 2 == 0; // setiap anggota genap adalah premium
                     RegularMember regularMember = new RegularMember(
                         member, 
                         "Profesional", 
@@ -2445,7 +2434,7 @@ public class Main {
                 }
             }
             
-            // Buat peminjaman (setiap anggota meminjam 1-3 buku)
+            // buat peminjaman (setiap anggota meminjam 1-3 buku)
             List<BookLoan> loanList = new ArrayList<>();
             
             for (Member member : memberList) {
@@ -2455,7 +2444,7 @@ public class Main {
                     Book book = allBooks.get((int)(Math.random() * allBooks.size()));
                     List<BookItem> copies = bookCopies.get(book);
                     
-                    // Cari salinan yang tersedia dan bisa dipinjam
+                    // cari salinan yang tersedia dan bisa dipinjam
                     BookItem availableCopy = null;
                     for (BookItem copy : copies) {
                         if (copy.isAvailable() && !copy.isReferenceOnly()) {
@@ -2472,7 +2461,7 @@ public class Main {
                             
                             // 10% peminjaman sudah jatuh tempo (overdue)
                             if (Math.random() < 0.1) {
-                                // Gunakan reflection untuk memodifikasi tanggal peminjaman menjadi lebih lama
+                                // gunakan reflection untuk memodifikasi tanggal peminjaman menjadi lebih lama
                                 Calendar pastCalendar = Calendar.getInstance();
                                 pastCalendar.add(Calendar.DAY_OF_MONTH, -45); // 45 hari yang lalu
                                 
@@ -2516,18 +2505,18 @@ public class Main {
                 }
             }
             
-            // Buat reservasi (20% anggota melakukan reservasi)
+            // buat reservasi (20% anggota melakukan reservasi)
             for (int i = 0; i < memberList.size(); i++) {
                 if (Math.random() < 0.2) { // 20% probabilitas
                     Member member = memberList.get(i);
                     
-                    // Pilih buku secara acak yang semua salinannya sedang dipinjam
+                    // pilih buku secara acak yang semua salinannya sedang dipinjam
                     for (Book book : allBooks) {
                         if (book.getAvailableItems().isEmpty() && !book.getItems().isEmpty()) {
                             try {
                                 Reservation reservation = member.reserveBook(book);
                                 reservations.put(reservation.getReservationId(), reservation);
-                                break; // Satu anggota hanya membuat satu reservasi
+                                break; // satu anggota hanya membuat satu reservasi
                             } catch (Exception e) {
                                 System.out.println("Gagal membuat reservasi: " + e.getMessage());
                             }
@@ -2575,4 +2564,3 @@ public class Main {
         return scanner.nextLine().trim();
     }
 }
-            

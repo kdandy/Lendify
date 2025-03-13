@@ -90,7 +90,7 @@ public class BookItem {
         isActive = active;
     }
     
-    // metode
+    // mutator
     public void checkout() {
         setAvailable(false);
         setStatus(BookStatus.LOANED);

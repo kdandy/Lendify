@@ -37,7 +37,7 @@ public class BookCategory {
         return books;
     }
     
-    // Methods
+    // mutator
     public void addBook(Book book) {
         books.add(book);
     }

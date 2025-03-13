@@ -79,10 +79,10 @@ public class Librarian extends Person {
         this.permission = permission;
     }
     
-    // metode
+    // mutator
     public BookItem addBookItem(Book book, String barcode) throws InvalidOperationException {
         if (permission == LibrarianPermission.BASIC) {
-            throw new InvalidOperationException("You do not have permission to add book items. Required: FULL or ADMIN.");
+            throw new InvalidOperationException("Anda tidak memiliki izin untuk menambahkan item buku. Diperlukan: Admin.");
         }
         
         BookItem bookItem = new BookItem(book, barcode);
@@ -92,7 +92,7 @@ public class Librarian extends Person {
     
     public Member addMember(Person person) throws InvalidOperationException {
         if (permission == LibrarianPermission.BASIC) {
-            throw new InvalidOperationException("You do not have permission to add members. Required: FULL or ADMIN.");
+            throw new InvalidOperationException("Anda tidak memiliki izin untuk menambahkan anggota. Diperlukan: Admin.");
         }
         
         String memberId = "M" + UUID.randomUUID().toString().substring(0, 8);
@@ -101,32 +101,32 @@ public class Librarian extends Person {
     }
     
     public BookLoan issueBook(Member member, BookItem bookItem) throws InvalidOperationException, ReferenceOnlyException {
-        // Check if the member is active
+        // periksa apakah anggota aktif
         if (!member.isActive() || member.getStatus() != MemberStatus.ACTIVE) {
-            throw new InvalidOperationException("Cannot issue book to inactive or suspended member.");
+            throw new InvalidOperationException("Tidak dapat menerbitkan buku kepada anggota yang tidak aktif atau ditangguhkan.");
         }
         
-        // Check if the book is reference only
+        // periksa apakah buku tersebut hanya referensi
         if (bookItem.isReferenceOnly()) {
-            throw new ReferenceOnlyException("Cannot issue reference book: " + bookItem.getBook().getTitle());
+            throw new ReferenceOnlyException("Tidak dapat menerbitkan buku referensi: " + bookItem.getBook().getTitle());
         }
         
-        // Check if the book is available
+        // periksa apakah buku ada
         if (!bookItem.isAvailable()) {
-            throw new InvalidOperationException("Book is not available for checkout: " + bookItem.getBook().getTitle());
+            throw new InvalidOperationException("Buku tidak tersedia untuk pembayaran: " + bookItem.getBook().getTitle());
         }
         
         try {
             BookLoan bookLoan = member.checkoutBook(bookItem);
             return bookLoan;
         } catch (Exception e) {
-            throw new InvalidOperationException("Error issuing book: " + e.getMessage());
+            throw new InvalidOperationException("Terjadi kesalahan saat menerbitkan buku: " + e.getMessage());
         }
     }
     
     public void returnBook(BookLoan bookLoan) throws InvalidOperationException {
         if (bookLoan.getStatus() != LoanStatus.ACTIVE && bookLoan.getStatus() != LoanStatus.OVERDUE) {
-            throw new InvalidOperationException("Cannot return a book that is not active or overdue: " + bookLoan.getStatus());
+            throw new InvalidOperationException("Tidak dapat mengembalikan buku yang tidak aktif atau lewat waktu pengembalian: " + bookLoan.getStatus());
         }
         
         Member member = bookLoan.getMember();
@@ -141,11 +141,11 @@ public class Librarian extends Person {
                     // Coba pinjamkan buku ke anggota yang melakukan reservasi
                     BookLoan newLoan = issueBook(reservation.getMember(), returnedItem);
                     reservation.setStatus(ReservationStatus.FULFILLED);
-                    System.out.println("Processed pending reservation for: " + reservation.getMember().getName());
-                    System.out.println("Book issued with loan ID: " + newLoan.getLoanId());
+                    System.out.println("Reservasi yang tertunda sedang diproses untuk: " + reservation.getMember().getName());
+                    System.out.println("Buku yang diterbitkan dengan ID pinjaman: " + newLoan.getLoanId());
                     break; // Hanya proses satu reservasi (yang paling lama menunggu)
                 } catch (Exception e) {
-                    System.out.println("Failed to process reservation for " + reservation.getMember().getName() + ": " + e.getMessage());
+                    System.out.println("Gagal memproses reservasi untuk " + reservation.getMember().getName() + ": " + e.getMessage());
                 }
             }
         }
@@ -153,7 +153,7 @@ public class Librarian extends Person {
     
     public void updateBookInfo(Book book, String title, String author, String publisher, int year) throws InvalidOperationException {
         if (permission == LibrarianPermission.BASIC) {
-            throw new InvalidOperationException("You do not have permission to update book information. Required: FULL or ADMIN.");
+            throw new InvalidOperationException("Anda tidak memiliki izin untuk memperbarui informasi buku. Diperlukan: Admin.");
         }
         
         book.setTitle(title);
@@ -164,7 +164,7 @@ public class Librarian extends Person {
     
     public void blacklistMember(Member member) throws InvalidOperationException {
         if (permission != LibrarianPermission.ADMIN) {
-            throw new InvalidOperationException("You do not have permission to blacklist members. Required: ADMIN.");
+            throw new InvalidOperationException("Anda tidak memiliki izin untuk memasukkan anggota ke dalam daftar hitam. Diperlukan: Admin");
         }
         
         member.setStatus(MemberStatus.BLACKLISTED);
@@ -173,7 +173,7 @@ public class Librarian extends Person {
     
     public void removeBookItem(BookItem bookItem) throws InvalidOperationException {
         if (permission != LibrarianPermission.ADMIN) {
-            throw new InvalidOperationException("You do not have permission to remove book items. Required: ADMIN.");
+            throw new InvalidOperationException("Anda tidak memiliki izin untuk menghapus item buku. Diperlukan: Admin");
         }
         
         bookItem.setActive(false);
@@ -183,33 +183,33 @@ public class Librarian extends Person {
     
     public void processReservation(Reservation reservation) throws InvalidOperationException {
         if (reservation.getStatus() != ReservationStatus.PENDING) {
-            throw new InvalidOperationException("Cannot process a reservation that is not pending.");
+            throw new InvalidOperationException("Tidak dapat memproses reservasi yang tidak tertunda.");
         }
         
         Book book = reservation.getBook();
         // cek apakah ada buku yang tersedia
         if (book.getAvailableItems().isEmpty()) {
-            // Tidak ada buku tersedia, tetap dalam status PENDING
-            System.out.println("No copies available. Reservation remains in PENDING status.");
-            System.out.println("The reservation will be processed when a copy becomes available.");
-            return; // Keluar dari metode tanpa mengubah status
+            // tidak ada buku tersedia, tetap dalam status PENDING
+            System.out.println("Tidak ada salinan yang tersedia. Reservasi masih dalam status PENDING.");
+            System.out.println("Reservasi akan diproses ketika salinannya tersedia.");
+            return; // keluar dari metode tanpa mengubah status
         }
         
-        // Ada buku tersedia, coba pinjamkan
+        // ada buku tersedia, coba pinjamkan
         for (BookItem bookItem : book.getAvailableItems()) {
             try {
                 BookLoan loan = issueBook(reservation.getMember(), bookItem);
                 reservation.setStatus(ReservationStatus.FULFILLED);
-                System.out.println("Book successfully issued. Loan ID: " + loan.getLoanId());
+                System.out.println("Buku berhasil diterbitkan. ID Peminjaman: " + loan.getLoanId());
                 return;
             } catch (Exception e) {
-                // Coba salinan berikutnya jika ada
+                // coba salinan berikutnya jika ada
                 continue;
             }
         }
         
-        // Jika sampai di sini, berarti ada masalah dengan peminjaman
-        throw new InvalidOperationException("Failed to issue book for the reservation.");
+        // jika sampai di sini, berarti ada masalah dengan peminjaman
+        throw new InvalidOperationException("Gagal menerbitkan buku untuk reservasi.");
     }
     
     @Override

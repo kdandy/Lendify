@@ -91,7 +91,7 @@ public class BookLoan {
         this.status = status;
     }
     
-    // Methods
+    // mutator
     public boolean isOverdue() {
         if (status != LoanStatus.ACTIVE) {
             return false;

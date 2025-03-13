@@ -361,45 +361,45 @@ public class LendifyGUI extends JFrame {
             java.util.List<Member> memberList = new java.util.ArrayList<>();
             
             // anggota reguler
-            Person person1 = new Person("P001", "Dandy Faishal Fahmi", "Jl. Timoho Timur 1A", "082125555645");
-            person1.setEmail("hello@dandy.my.id");
+            Person person1 = new Person("P001", "Dandy", "Jl. Timoho Timur 1A", "082125555645");
+            person1.setEmail("dandy@students.undip.ac.id");
             personList.add(person1);
-            
-            Person person2 = new Person("P002", "Ratna Sari", "Jl. Mawar No. 25", "082345678901");
-            person2.setEmail("ratna.sari@email.com");
+
+            Person person2 = new Person("P002", "Gaza", "Jl. Mawar No. 25", "082345678901");
+            person2.setEmail("gaza@students.undip.ac.id");
             personList.add(person2);
-            
-            Person person3 = new Person("P003", "Budi Santoso", "Jl. Melati No. 42", "083456789012");
-            person3.setEmail("budi.santoso@company.com");
+
+            Person person3 = new Person("P003", "Vava", "Jl. Melati No. 42", "083456789012");
+            person3.setEmail("vava@students.undip.ac.id");
             personList.add(person3);
-            
-            Person person4 = new Person("P004", "Dewi Anggraini", "Jl. Anggrek No. 7", "084567890123");
-            person4.setEmail("dewi.anggraini@company.com");
+
+            Person person4 = new Person("P004", "Fauzan", "Jl. Anggrek No. 7", "084567890123");
+            person4.setEmail("fauzan@students.undip.ac.id");
             personList.add(person4);
-            
-            Person person5 = new Person("P005", "Eko Prasetyo", "Jl. Kenanga No. 15", "085678901234");
-            person5.setEmail("eko.prasetyo@email.com");
+
+            Person person5 = new Person("P005", "Ganen", "Jl. Kenanga No. 15", "085678901234");
+            person5.setEmail("ganen@students.undip.ac.id");
             personList.add(person5);
-            
+
             // anggota mahasiswa
             Person person6 = new Person("P006", "Fani Wijaya", "Jl. Kampus No. 3", "086789012345");
-            person6.setEmail("fani.wijaya@university.edu");
+            person6.setEmail("fani.wijaya@students.undip.ac.id");
             personList.add(person6);
-            
+
             Person person7 = new Person("P007", "Gunawan Hidayat", "Jl. Pendidikan No. 8", "087890123456");
-            person7.setEmail("gunawan.hidayat@university.edu");
+            person7.setEmail("gunawan.hidayat@students.undip.ac.id");
             personList.add(person7);
-            
+
             Person person8 = new Person("P008", "Hani Susanti", "Jl. Mahasiswa No. 12", "088901234567");
-            person8.setEmail("hani.susanti@university.edu");
+            person8.setEmail("hani.susanti@students.undip.ac.id");
             personList.add(person8);
-            
+
             Person person9 = new Person("P009", "Indra Kusuma", "Jl. Ilmu No. 21", "089012345678");
-            person9.setEmail("indra.kusuma@university.edu");
+            person9.setEmail("indra.kusuma@students.undip.ac.id");
             personList.add(person9);
-            
+
             Person person10 = new Person("P010", "Joko Widodo", "Jl. Cendekia No. 17", "089123456789");
-            person10.setEmail("joko.widodo@university.edu");
+            person10.setEmail("joko.widodo@students.undip.ac.id");
             personList.add(person10);
             
             // Buat anggota dari person
@@ -708,11 +708,11 @@ public class LendifyGUI extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try {
                 // Testing only - dalam implementasi sesungguhnya, ini dipanggil dari Main.java
-                Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "123456789");
-                adminPerson.setEmail("admin@perpustakaan.com");
+                Person adminPerson = new Person("P001", "Admin", "Alamat Admin", "082125555645");
+                adminPerson.setEmail("hello@dandy.my.id");
                 Librarian admin = new Librarian(adminPerson, "L001", "Admin Perpustakaan", 0, LibrarianPermission.ADMIN);
                 
-                Library library = new Library("Perpustakaan Test", "Jl. Test No. 123");
+                Library library = new Library("Perpustakaan Admin", "Jl. Timoho Timur");
                 library.addLibrarian(admin);
                 
                 LendifyGUI gui = new LendifyGUI(library, admin);

@@ -117,11 +117,11 @@ public class Member extends Person {
     
     public BookLoan checkoutBook(BookItem book) throws InactiveAccountException, MaxBooksReachedException {
         if (!isActive) {
-            throw new InactiveAccountException("Your account is not active. Please contact the librarian.");
+            throw new InactiveAccountException("Akun Anda tidak aktif. Silakan hubungi pustakawan.");
         }
         
         if (getCurrentBooksCount() >= getMaxBooks()) {
-            throw new MaxBooksReachedException("You have reached the maximum number of books that can be checked out.");
+            throw new MaxBooksReachedException("Anda telah mencapai jumlah maksimum buku yang dapat dipinjam.");
         }
         
         BookLoan loan = new BookLoan(this, book);
@@ -162,7 +162,7 @@ public class Member extends Person {
     
     public Reservation reserveBook(Book book) throws InactiveAccountException {
         if (!isActive) {
-            throw new InactiveAccountException("Your account is not active. Please contact the librarian.");
+            throw new InactiveAccountException("Akun Anda tidak aktif. Silakan hubungi pustakawan.");
         }
         
         Reservation reservation = new Reservation(this, book);

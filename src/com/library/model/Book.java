@@ -20,13 +20,13 @@ public class Book {
     private BookFormat format;
     private Language language;
     private List<Reservation> reservations;
-    private List<BookCategory> categories; // Tambahkan field categories
+    private List<BookCategory> categories;
     
     // konsruktor
     public Book() {
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
-        this.categories = new ArrayList<>(); // Inisialisasi categories
+        this.categories = new ArrayList<>();
     }
     
     public Book(String isbn, String title, String author, String publisher, int year) {
@@ -37,7 +37,7 @@ public class Book {
         this.publicationYear = year;
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
-        this.categories = new ArrayList<>(); // Inisialisasi categories
+        this.categories = new ArrayList<>();
     }
     
     public Book(String isbn, String title, String author, String publisher, int year, 
@@ -53,7 +53,7 @@ public class Book {
         this.language = language;
         this.items = new ArrayList<>();
         this.reservations = new ArrayList<>();
-        this.categories = new ArrayList<>(); // Inisialisasi categories
+        this.categories = new ArrayList<>();
     }
     
     // getters and setters
@@ -138,8 +138,7 @@ public class Book {
     }
     
     /**
-     * Mendapatkan daftar kategori buku
-     * @return Daftar kategori
+     * @return daftar kategori
      */
     public List<BookCategory> getCategories() {
         if (categories == null) {
@@ -149,7 +148,6 @@ public class Book {
     }
     
     /**
-     * Menambahkan buku ke kategori
      * @param category kategori yang akan ditambahkan
      */
     public void addCategory(BookCategory category) {
@@ -158,7 +156,7 @@ public class Book {
         }
         if (!categories.contains(category)) {
             categories.add(category);
-            // Pastikan buku juga ditambahkan ke daftar buku dalam kategori (relasi bidirectional)
+            // pastikan buku juga ditambahkan ke daftar buku dalam kategori (relasi bidirectional)
             if (!category.getBooks().contains(this)) {
                 category.addBook(this);
             }
@@ -166,20 +164,19 @@ public class Book {
     }
     
     /**
-     * Menghapus buku dari kategori
      * @param category kategori yang akan dihapus
      */
     public void removeCategory(BookCategory category) {
         if (categories != null) {
             categories.remove(category);
-            // Pastikan buku juga dihapus dari daftar buku dalam kategori (relasi bidirectional)
+            // pastikan buku juga dihapus dari daftar buku dalam kategori (relasi bidirectional)
             if (category.getBooks().contains(this)) {
                 category.removeBook(this);
             }
         }
     }
     
-    // metode
+    // mutator
     public void addBookItem(BookItem item) {
         items.add(item);
     }
